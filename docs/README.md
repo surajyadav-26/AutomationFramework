@@ -11,7 +11,7 @@ Playwright, requests, Allure. No Docker anywhere.
 
 ## Setup
 ```
-python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
+# uses your installed Python 3.12 directly (no virtualenv)
 make install                                     # pip install -r requirements.lock + playwright chromium
 cp .env.example .env                             # then set APP_PASSWORD and API_PASSWORD
 ```
