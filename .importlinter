@@ -1,0 +1,34 @@
+[importlinter]
+root_packages =
+    steps
+    pages
+    clients
+    core
+include_external_packages = True
+
+[importlinter:contract:layers]
+name = steps -> pages/clients -> core
+type = layers
+layers =
+    steps
+    pages | clients
+    core
+
+[importlinter:contract:api-steps-no-browser]
+name = steps.api never imports pages or Playwright
+type = forbidden
+source_modules =
+    steps.api
+forbidden_modules =
+    pages
+    playwright
+    pytest_playwright
+
+[importlinter:contract:browser-steps-no-clients]
+name = steps.ui and steps.visual never import clients
+type = forbidden
+source_modules =
+    steps.ui
+    steps.visual
+forbidden_modules =
+    clients
