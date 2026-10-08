@@ -1,11 +1,10 @@
-"""The --only-rerun filter in pytest.ini retries infrastructure errors and nothing else.
+"""The --only-rerun filter in pyproject.toml retries infrastructure errors and nothing else.
 
 pytest-rerunfailures matches each pattern against "ClassName: message" of every exception in the
 chain (no module path). These tests apply the real patterns with the plugin's own matcher.
 """
 
-import configparser
-import shlex
+import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -17,10 +16,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_patterns() -> list[str]:
-    parser = configparser.ConfigParser(interpolation=None)
-    parser.read(ROOT / "pytest.ini")
-    options = shlex.split(parser["pytest"]["addopts"])
-    return [o.split("=", 1)[1] for o in options if o.startswith("--only-rerun=")]
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    addopts = config["tool"]["pytest"]["ini_options"]["addopts"]
+    return [o.split("=", 1)[1] for o in addopts if o.startswith("--only-rerun=")]
 
 
 PATTERNS = load_patterns()

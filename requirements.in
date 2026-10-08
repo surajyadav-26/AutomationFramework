@@ -1,7 +1,8 @@
 # Direct dependencies of the framework. requirements.lock pins these and everything they pull in.
 # Do not add libraries without asking (project rule). To re-pin: create a clean virtualenv, install
-# this file, `pip freeze > requirements.lock`, then rebuild requirements-quality.lock the same way
-# (install both .in files, keep only the pins that are not in requirements.lock).
+# this file, run `pip freeze > requirements.lock`, then `make doctor`.
+
+# --- run the tests
 pytest
 pytest-playwright
 pytest-bdd
@@ -15,3 +16,9 @@ python-dotenv
 ruff
 import-linter
 axe-playwright-python
+
+# --- check the framework itself (make check / test-framework / audit / mutation)
+mypy
+types-requests
+pip-audit
+pytest-cov

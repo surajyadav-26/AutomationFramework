@@ -8,7 +8,7 @@ __pycache__/
 !.env.example
 reports/
 logs/
-# local-only baselines; only linux (CI) baselines are the source of truth
+# visual baselines are local to each machine: rendering differs per OS
 baselines/windows/
 baselines/macos/
 .import_linter_cache/

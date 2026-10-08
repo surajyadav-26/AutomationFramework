@@ -1,0 +1,39 @@
+name: Set up the framework
+description: Python from .python-version, the pinned dependencies and the Playwright browsers a job needs. Can also fail early when the repository secrets are missing.
+
+inputs:
+  browsers:
+    description: Playwright browsers to install, separated by spaces (for example "chromium firefox"). Empty installs none.
+    required: false
+    default: ""
+  check-secrets:
+    description: 'Set to "true" to fail early when APP_PASSWORD or API_PASSWORD is missing from the job env.'
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Check required secrets
+      if: inputs.check-secrets == 'true'
+      shell: bash
+      run: |
+        for name in APP_PASSWORD API_PASSWORD; do
+          if [ -z "${!name}" ]; then
+            echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions (see CI first-time setup in docs/README.md)."
+            missing=1
+          fi
+        done
+        exit ${missing:-0}
+    - uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+        cache: pip
+        cache-dependency-path: requirements.lock
+    - name: Install the pinned dependencies
+      shell: bash
+      run: pip install -r requirements.lock
+    - name: Install Playwright browsers
+      if: inputs.browsers != ''
+      shell: bash
+      run: playwright install --with-deps ${{ inputs.browsers }}

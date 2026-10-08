@@ -39,11 +39,14 @@ class StubAuthServer:
 
         class Handler(BaseHTTPRequestHandler):
             def do_POST(self) -> None:  # noqa: N802 (name required by BaseHTTPRequestHandler)
+                # Always consume the request body first: replying and closing with unread data
+                # can reset the connection under the client (seen on Windows as a flaky 404 test).
+                length = int(self.headers.get("Content-Length") or 0)
+                raw = self.rfile.read(length) if length else b""
                 if self.path != "/auth/login":
                     return self._send(404, {"message": "Not Found"})
-                length = int(self.headers.get("Content-Length") or 0)
                 try:
-                    body = json.loads(self.rfile.read(length) or b"{}")
+                    body = json.loads(raw or b"{}")
                 except ValueError:
                     return self._send(400, {"message": "Invalid JSON"})
                 valid = body.get("username") == owner.username

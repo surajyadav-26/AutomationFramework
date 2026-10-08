@@ -19,18 +19,17 @@ env:
   # published. Traces are kept as private run artifacts instead (see playwright-output-* below).
   ATTACH_TRACE_AND_VIDEO: "false"
 
+# Every job: check out, then ./.github/actions/setup (Python, pinned dependencies, browsers).
+# Visual tests are not run here: their baselines are local to a developer machine (see docs/README.md).
 jobs:
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock -r requirements-quality.lock
-      - run: playwright install --with-deps chromium  # a few self-tests use a real browser on local HTML
+          browsers: chromium  # a few self-tests use a real browser on local HTML
       - run: python tools/check_env.py
       - run: ruff check .
       - run: ruff format --check .
@@ -39,7 +38,7 @@ jobs:
       - run: python tools/check_rules.py
       - run: pytest -c tests_framework/pytest.ini tests_framework -q --tb=short --cov --cov-fail-under=95
       - name: Dependency vulnerability scan
-        run: pip-audit -r requirements.lock -r requirements-quality.lock --no-deps --disable-pip
+        run: pip-audit -r requirements.lock --no-deps --disable-pip
 
   api:
     runs-on: ubuntu-latest
@@ -50,21 +49,9 @@ jobs:
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check required secrets
-        run: |
-          for name in APP_PASSWORD API_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions (see docs/CI_SETUP.md)."
-              missing=1
-            fi
-          done
-          exit ${missing:-0}
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium firefox webkit
+          check-secrets: "true"
       - run: pytest steps/api -q --tb=short
       - uses: actions/upload-artifact@v4
         if: always()
@@ -82,21 +69,10 @@ jobs:
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check required secrets
-        run: |
-          for name in APP_PASSWORD API_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions (see docs/CI_SETUP.md)."
-              missing=1
-            fi
-          done
-          exit ${missing:-0}
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium firefox webkit
+          browsers: chromium
+          check-secrets: "true"
       - run: pytest steps/ui -m smoke -q --tb=short
       - uses: actions/upload-artifact@v4
         if: always()
@@ -120,21 +96,10 @@ jobs:
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check required secrets
-        run: |
-          for name in APP_PASSWORD API_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions (see docs/CI_SETUP.md)."
-              missing=1
-            fi
-          done
-          exit ${missing:-0}
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium firefox webkit
+          browsers: chromium
+          check-secrets: "true"
       - run: pytest steps/ui -q --tb=short -n 2
       - uses: actions/upload-artifact@v4
         if: always()
@@ -149,50 +114,6 @@ jobs:
           path: reports/playwright
           if-no-files-found: ignore
 
-  visual:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: ui-full
-    env:
-      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-      API_PASSWORD: ${{ secrets.API_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check required secrets
-        run: |
-          for name in APP_PASSWORD API_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions (see docs/CI_SETUP.md)."
-              missing=1
-            fi
-          done
-          exit ${missing:-0}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium firefox webkit
-      - run: pytest steps/visual -q --tb=short
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: allure-results-visual
-          path: reports/allure-results
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-output-visual
-          path: reports/playwright
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: visual-diffs
-          path: reports/visual
-          if-no-files-found: ignore
-
   accessibility:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -202,21 +123,10 @@ jobs:
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check required secrets
-        run: |
-          for name in APP_PASSWORD API_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions (see docs/CI_SETUP.md)."
-              missing=1
-            fi
-          done
-          exit ${missing:-0}
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium firefox webkit
+          browsers: chromium
+          check-secrets: "true"
       - run: pytest steps/accessibility -q --tb=short
       - uses: actions/upload-artifact@v4
         if: always()
@@ -244,28 +154,11 @@ jobs:
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check required secrets
-        run: |
-          for name in APP_PASSWORD API_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions (see docs/CI_SETUP.md)."
-              missing=1
-            fi
-          done
-          exit ${missing:-0}
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium firefox webkit
-      - name: Run the browser suites (visual joins once this browser has linux baselines)
-        run: |
-          paths="steps/ui steps/accessibility"
-          if ls baselines/linux/${{ matrix.browser }}/*/*.png >/dev/null 2>&1; then
-            paths="$paths steps/visual"
-          fi
-          pytest $paths -q --tb=short -n 2 --browser ${{ matrix.browser }}
+          browsers: ${{ matrix.browser }}
+          check-secrets: "true"
+      - run: pytest steps/ui steps/accessibility -q --tb=short -n 2 --browser ${{ matrix.browser }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -278,17 +171,11 @@ jobs:
           name: playwright-output-cross-browser-${{ matrix.browser }}
           path: reports/playwright
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: visual-diffs-${{ matrix.browser }}
-          path: reports/visual
-          if-no-files-found: ignore
 
   report:
     # Merges the results of every test job, keeps run history for trend graphs, publishes the report.
     if: always()
-    needs: [api, ui-smoke, ui-full, visual, accessibility, cross-browser]
+    needs: [api, ui-smoke, ui-full, accessibility, cross-browser]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -318,7 +205,7 @@ jobs:
       - uses: actions/setup-python@v5
         if: steps.has_results.outputs.found == 'true'
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
       - name: Job summary
         if: steps.has_results.outputs.found == 'true'
         run: python tools/ci_summary.py reports/allure-results >> "$GITHUB_STEP_SUMMARY"

@@ -111,7 +111,7 @@ def check_features(root: Path) -> list[str]:
 # --- visual baselines ----------------------------------------------------------------------------
 BASELINE_OSES = {"linux", "windows", "macos"}
 BASELINE_BROWSERS = {"chromium", "firefox", "webkit"}
-LOCAL_ONLY_OSES = ("windows", "macos")  # gitignored; the CI runner (linux) is the truth
+LOCAL_ONLY_OSES = ("windows", "macos")  # gitignored: rendering differs per machine
 BASELINE_NAME_USE = re.compile(r"assert_matches_baseline\(\s*\"([a-z0-9_]+)\"")
 
 

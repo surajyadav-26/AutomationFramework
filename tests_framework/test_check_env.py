@@ -71,10 +71,13 @@ def test_every_direct_dependency_of_the_repo_is_pinned():
     assert check_env.unpinned_direct(direct, pins) == []
 
 
-def test_python_version_file_matches_the_ci_workflow():
-    wanted = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
-    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    assert f'python-version: "{wanted}"' in workflow
+def test_ci_takes_its_python_version_from_the_python_version_file():
+    """One source of truth: the shared setup action and the report job read .python-version."""
+    action = (ROOT / ".github" / "actions" / "setup" / "action.yml").read_text(encoding="utf-8")
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "python-version-file: .python-version" in action
+    assert "python-version-file: .python-version" in ci  # the report job sets Python up itself
+    assert 'python-version: "' not in action + ci  # no second, hard-coded version to drift
 
 
 # --- main(): the whole doctor against a throwaway project --------------------------------------
@@ -82,12 +85,10 @@ def test_python_version_file_matches_the_ci_workflow():
 
 @pytest.fixture
 def doctor(tmp_path, monkeypatch):
-    """A tiny project root with matching locks; returns a function that runs check_env.main()."""
+    """A tiny project root with a matching lock; returns a function that runs check_env.main()."""
     (tmp_path / ".python-version").write_text("3.12\n")
-    (tmp_path / "requirements.lock").write_text("alpha==1.0\nbeta==2.0\n")
-    (tmp_path / "requirements-quality.lock").write_text("gamma==3.0\n")
-    (tmp_path / "requirements.in").write_text("alpha\nbeta\n")
-    (tmp_path / "requirements-quality.in").write_text("gamma\n")
+    (tmp_path / "requirements.lock").write_text("alpha==1.0\nbeta==2.0\ngamma==3.0\n")
+    (tmp_path / "requirements.in").write_text("alpha\nbeta\ngamma\n")
     monkeypatch.setattr(check_env, "ROOT", tmp_path)
     monkeypatch.setattr(check_env.sys, "version_info", (3, 12, 4, "final", 0))
     installed = {"alpha": "1.0", "beta": "2.0", "gamma": "3.0"}
@@ -136,5 +137,5 @@ def test_a_clashing_package_only_warns(doctor, capsys):
 
 def test_missing_optional_files_are_tolerated(doctor, capsys):
     (doctor.root / ".python-version").unlink()
-    (doctor.root / "requirements-quality.in").unlink()
+    (doctor.root / "requirements.in").unlink()
     assert doctor() == 0

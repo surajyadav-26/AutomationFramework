@@ -15,10 +15,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -r requirements.lock -r requirements-quality.lock
-      - run: playwright install --with-deps chromium
+          browsers: chromium
       - run: python tools/mutation_check.py

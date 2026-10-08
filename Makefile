@@ -1,7 +1,7 @@
 PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest -q --tb=short
 
-.PHONY: install check api ui smoke visual accessibility cross-browser test-framework mutation audit doctor install-dev update-baselines parallel report serve
+.PHONY: install check api ui smoke visual accessibility cross-browser test-framework mutation audit doctor update-baselines parallel report serve
 
 install:
 	$(PYTHON) -m pip install -r requirements.lock
@@ -41,18 +41,13 @@ test-framework:
 mutation:
 	$(PYTHON) tools/mutation_check.py
 
-# does this Python match requirements*.lock and .python-version?
+# does this Python match requirements.lock and .python-version?
 doctor:
 	$(PYTHON) tools/check_env.py
 
 # dependency vulnerability scan (needs network)
 audit:
-	$(PYTHON) -m pip_audit -r requirements.lock -r requirements-quality.lock --no-deps --disable-pip
-
-# runtime plus quality tools (mypy, pip-audit, coverage), for working on the framework itself
-install-dev:
-	$(PYTHON) -m pip install -r requirements.lock -r requirements-quality.lock
-	$(PYTHON) -m playwright install --with-deps chromium firefox webkit
+	$(PYTHON) -m pip_audit -r requirements.lock --no-deps --disable-pip
 
 update-baselines:
 	$(PYTEST) steps/visual --update-baselines

@@ -24,3 +24,54 @@ exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
 [tool.ruff.lint.per-file-ignores]
 # the mutant table is one line per mutant on purpose
 "tools/mutation_check.py" = ["E501"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+pythonpath = ["."]
+testpaths = ["steps"]
+bdd_features_base_dir = "features"
+markers = [
+    "ui: browser UI tests",
+    "api: HTTP API tests",
+    "visual: screenshot comparison tests",
+    "accessibility: axe-core accessibility scans",
+    "smoke: quick checks run first",
+]
+log_file_level = "INFO"
+log_file_format = "%(asctime)s [pid %(process)d] %(levelname)s %(name)s: %(message)s"
+# Reruns (count and delay come from .env: RERUN_COUNT, RERUN_DELAY) apply only to infrastructure
+# errors. pytest-rerunfailures matches --only-rerun against "ClassName: message" for every
+# exception in the chain, with no module path. tests_framework/test_rerun_filter.py checks the
+# patterns. Each list item is one command line argument (no shell splitting happens).
+addopts = [
+    "-ra",
+    "-p", "no:allure_pytest",  # an old global allure-pytest clashes with allure-pytest-bdd
+    "--strict-markers",
+    "--alluredir=reports/allure-results",
+    "--clean-alluredir",
+    "--output=reports/playwright",
+    "--only-rerun=^(TimeoutError|ConnectTimeout|ReadTimeout|Timeout|ConnectionError|ConnectionResetError|ReadTimeoutError|ConnectTimeoutError|NewConnectionError|ProtocolError):",
+    "--only-rerun=net::ERR_",
+]
+
+# Architecture rules, checked by `lint-imports`: features -> steps -> pages/clients -> core.
+[tool.importlinter]
+root_packages = ["steps", "pages", "clients", "core"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "steps -> pages/clients -> core"
+type = "layers"
+layers = ["steps", "pages | clients", "core"]
+
+[[tool.importlinter.contracts]]
+name = "steps.api never imports pages or Playwright"
+type = "forbidden"
+source_modules = ["steps.api"]
+forbidden_modules = ["pages", "playwright", "pytest_playwright"]
+
+[[tool.importlinter.contracts]]
+name = "steps.ui, steps.visual and steps.accessibility never import clients"
+type = "forbidden"
+source_modules = ["steps.ui", "steps.visual", "steps.accessibility"]
+forbidden_modules = ["clients"]

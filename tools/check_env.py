@@ -2,8 +2,8 @@
 
 Checks (exit code 1 if any of the first three fails):
   1. the Python version matches .python-version (major.minor)
-  2. every package pinned in requirements.lock / requirements-quality.lock is installed, same pin
-  3. every direct dependency in requirements.in / requirements-quality.in is pinned in a lock file
+  2. every package pinned in requirements.lock is installed, at the same version
+  3. every direct dependency in requirements.in is pinned in requirements.lock
   4. warns about installed packages known to clash with ours (allure-pytest)
 
 Usage: python tools/check_env.py        (make doctor)
@@ -18,11 +18,11 @@ from importlib.metadata import distributions
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOCKS = ("requirements.lock", "requirements-quality.lock")
-DIRECT = ("requirements.in", "requirements-quality.in")
+LOCKS = ("requirements.lock",)
+DIRECT = ("requirements.in",)
 PIN = re.compile(r"^([A-Za-z0-9_.-]+)==(\S+)")
 CLASHES = {
-    "allure-pytest": "clashes with allure-pytest-bdd (both register --alluredir); pytest.ini "
+    "allure-pytest": "clashes with allure-pytest-bdd (both register --alluredir); pyproject.toml "
     "disables it with '-p no:allure_pytest', but uninstalling it is cleaner",
 }
 

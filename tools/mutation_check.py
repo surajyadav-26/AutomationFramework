@@ -67,7 +67,7 @@ MUTANTS = [
     Mutant("tools/check_rules.py", "if SECRET_ASSIGNMENT.search(line):", "if False:", "check_rules: secret literals allowed"),
     Mutant("tools/ci_summary.py", 'in ("failed", "broken")]', 'in ("failed",)]', "ci_summary: broken tests not listed"),
     Mutant("tools/check_env.py", "elif have != wanted:", "elif False:", "check_env: version drift ignored"),
-    Mutant("pytest.ini", "--only-rerun=^(TimeoutError|ConnectTimeout|", "--only-rerun=^(TimeoutError|", "pytest.ini: connect timeouts not retried"),
+    Mutant("pyproject.toml", "--only-rerun=^(TimeoutError|ConnectTimeout|", "--only-rerun=^(TimeoutError|", "pyproject.toml: connect timeouts not retried"),
 ]  # fmt: skip
 
 
