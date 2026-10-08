@@ -7,6 +7,7 @@ Usage: python tools/check_rules.py [root]   (root defaults to the repository roo
 from __future__ import annotations
 
 import ast
+import os
 import re
 import sys
 from pathlib import Path
@@ -106,9 +107,64 @@ def check_features(root: Path) -> list[str]:
     return errors
 
 
+# --- secrets -------------------------------------------------------------------------------------
+SECRET_ASSIGNMENT = re.compile(
+    r"\b[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|API_?KEY)[A-Z0-9_]*\s*[=:]\s*[\"']?"
+    r"(?![\"'$<{\s]|$)(?![A-Za-z_.]+\()[^\s\"']{3,}"
+)
+SECRET_NAME = re.compile(r"[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|API_?KEY)[A-Z0-9_]*")
+SKIP_DIRS = {
+    ".git", ".venv", "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache",
+    ".import_linter_cache", "reports", "logs", "baselines", "htmlcov", "node_modules",
+    "tests_framework",
+}  # fmt: skip
+MIN_SECRET_LENGTH = 4
+
+
+def known_secret_values(root: Path) -> set[str]:
+    """Values of *PASSWORD / *SECRET / *TOKEN settings in the local .env and the environment."""
+    pairs: dict[str, str] = dict(os.environ)
+    env_file = root / ".env"
+    if env_file.exists():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if "=" in line and not line.lstrip().startswith("#"):
+                key, _, value = line.partition("=")
+                pairs.setdefault(key.strip(), value.strip().strip("\"'"))
+    return {
+        value
+        for key, value in pairs.items()
+        if SECRET_NAME.fullmatch(key) and len(value) >= MIN_SECRET_LENGTH
+    }
+
+
+def check_secrets(root: Path) -> list[str]:
+    """No secret literals assigned in committed files, and no known secret value in any of them."""
+    errors = []
+    secrets = known_secret_values(root)
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root)
+        if not path.is_file() or SKIP_DIRS & set(relative.parts):
+            continue
+        if path.name.startswith(".env") and path.name != ".env.example":
+            continue  # local secret files, gitignored by design
+        if path.stat().st_size > 1_000_000:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue  # binary file
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if SECRET_ASSIGNMENT.search(line):
+                errors.append(f"{relative}:{lineno}: secret assigned a literal value")
+            for value in secrets:
+                if value in line:
+                    errors.append(f"{relative}:{lineno}: contains the value of a secret setting")
+    return errors
+
+
 def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path(__file__).resolve().parent.parent
-    errors = check_steps(root) + check_locators(root) + check_features(root)
+    errors = check_steps(root) + check_locators(root) + check_features(root) + check_secrets(root)
     for error in errors:
         print(error)
     print(f"check_rules: {'FAILED' if errors else 'ok'} ({len(errors)} problem(s))")

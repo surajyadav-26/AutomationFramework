@@ -75,6 +75,15 @@ def _int(name: str, default: int) -> int:
         raise MissingSettingError(f"{name}='{raw}' must be an integer") from None
 
 
+def _require_url(name: str) -> str:
+    value = _require(name).strip()
+    if not value.startswith(("http://", "https://")) or " " in value:
+        raise MissingSettingError(
+            f"{name}='{value}' must be a URL starting with http:// or https://"
+        )
+    return value.rstrip("/")
+
+
 @dataclass(frozen=True)
 class Settings:
     env: str
@@ -91,6 +100,7 @@ class Settings:
     rerun_count: int = 1  # reruns of a test after an infrastructure error (0 disables)
     rerun_delay: float = 1.0  # seconds between reruns
     visual_ignore_antialiasing: bool = False  # ignore 1-2px wide diffs (anti-aliasing noise)
+    attach_trace_and_video: bool = True  # put traces/videos in the Allure report (see docs)
 
     @property
     def app_password(self) -> str:
@@ -113,8 +123,8 @@ def get_settings() -> Settings:
     load_dotenv(env_file)
     return Settings(
         env=env,
-        app_url=_require("APP_URL"),
-        api_url=_require("API_URL"),
+        app_url=_require_url("APP_URL"),
+        api_url=_require_url("API_URL"),
         log_retention_days=_int("LOG_RETENTION_DAYS", 7),
         trace_mode=_choice("TRACE_MODE", "retain-on-failure", TRACE_MODES),
         video_mode=_choice("VIDEO_MODE", "retain-on-failure", VIDEO_MODES),
@@ -126,4 +136,5 @@ def get_settings() -> Settings:
         rerun_count=_int("RERUN_COUNT", 1),
         rerun_delay=_float("RERUN_DELAY", 1.0),
         visual_ignore_antialiasing=_bool("VISUAL_IGNORE_ANTIALIASING", False),
+        attach_trace_and_video=_bool("ATTACH_TRACE_AND_VIDEO", True),
     )

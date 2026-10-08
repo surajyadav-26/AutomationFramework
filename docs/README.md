@@ -26,6 +26,31 @@ Allure CLI installed separately). Allure results are written to `reports/allure-
 together with `environment.properties`; failure screenshots, API request/response and visual
 Baseline/Actual/Diff images are attached.
 
+## Configuration reference
+Set these in `.env` (copy `.env.example`), per environment in `.env.<TEST_ENV>`, or as real environment
+variables. Precedence, highest first: real environment variables, `.env.<TEST_ENV>`, `.env`, then
+`config/<TEST_ENV>.env`. A wrong value stops the run with a message naming the setting.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `TEST_ENV` | `qa` | which `config/<name>.env` to use |
+| `APP_URL` / `API_URL` | from `config/<TEST_ENV>.env` | base URLs; must start with `http://` or `https://` |
+| `APP_PASSWORD` / `API_PASSWORD` | none, required | passwords of the UI and API users; only from env or `.env*`, never committed |
+| `LOG_RETENTION_DAYS` | `7` | daily log files older than this are deleted (`0` keeps all) |
+| `TRACE_MODE` / `VIDEO_MODE` | `retain-on-failure` | Playwright trace and video: `off`, `on`, `retain-on-failure` |
+| `ATTACH_TRACE_AND_VIDEO` | `true` | put trace and video in the Allure report. **A trace records typed passwords**, so CI sets this to `false`; traces then stay in the run's private `playwright-output` artifact |
+| `ALLURE_AUTO_OPEN` / `ALLURE_THEME` | `true` / `dark` | open the report after a run (never in CI); `dark` or `light` |
+| `A11Y_FAIL_IMPACT` | `serious` | lowest axe impact that fails an accessibility test |
+| `API_TIMEOUT` / `API_MODE` | `15` / `live` | request timeout in seconds; `live` or offline `stub` |
+| `RERUN_COUNT` / `RERUN_DELAY` | `1` / `1` | reruns after infrastructure errors only, and the pause in seconds |
+| `VISUAL_IGNORE_ANTIALIASING` | `false` | ignore 1-2px wide visual differences |
+
+### Secrets in reports
+API requests and responses attached to Allure pass through `core/api/redaction.py`: passwords, tokens,
+cookies, authorization headers and API keys are replaced by `***`. `tools/check_rules.py` also fails if a
+secret literal is assigned in a committed file, or if the actual value of a secret setting from your
+`.env` or environment appears in any committed file.
+
 ## Logs, traces and video (configurable in `.env`)
 | Key | Default | Meaning |
 |---|---|---|

@@ -1,4 +1,8 @@
-"""requests wrapper that logs every call and attaches request/response to Allure."""
+"""requests wrapper that logs every call and attaches request/response to Allure.
+
+Everything attached is passed through redact(): passwords, tokens, cookies and authorization
+headers never reach the report (which may be published) or the logs.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +10,7 @@ import logging
 
 import requests
 
+from core.api.redaction import redact
 from core.reporting.allure_helpers import attach_json
 
 log = logging.getLogger("api")
@@ -23,22 +28,28 @@ class HttpClient:
         kwargs.setdefault("timeout", self.timeout)
         log.info("%s %s", method, url)
         attach_json(
-            {
-                "method": method,
-                "url": url,
-                "headers": dict(self.session.headers),
-                "json": kwargs.get("json"),
-            },
+            redact(
+                {
+                    "method": method,
+                    "url": url,
+                    "headers": {**self.session.headers, **(kwargs.get("headers") or {})},
+                    "params": kwargs.get("params"),
+                    "json": kwargs.get("json"),
+                    "data": kwargs.get("data") if isinstance(kwargs.get("data"), dict) else None,
+                }
+            ),
             f"Request {method} {path}",
         )
         response = self.session.request(method, url, **kwargs)
         log.info("-> %s in %.0f ms", response.status_code, response.elapsed.total_seconds() * 1000)
         attach_json(
-            {
-                "status": response.status_code,
-                "headers": dict(response.headers),
-                "body": _body(response),
-            },
+            redact(
+                {
+                    "status": response.status_code,
+                    "headers": dict(response.headers),
+                    "body": _body(response),
+                }
+            ),
             f"Response {response.status_code} {path}",
         )
         return response

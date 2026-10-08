@@ -79,7 +79,7 @@ ARTIFACTS = (
 def pytest_runtest_teardown(item: pytest.Item):
     """Attach the Playwright trace and video (kept per TRACE_MODE / VIDEO_MODE) to the report."""
     folder = None
-    if (
+    if get_settings().attach_trace_and_video and (
         item.get_closest_marker("ui")
         or item.get_closest_marker("visual")
         or item.get_closest_marker("accessibility")

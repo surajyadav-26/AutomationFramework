@@ -5,6 +5,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  # A Playwright trace records everything typed, including passwords, and the Allure report is
+  # published. Traces are kept as private run artifacts instead (see playwright-output-* below).
+  ATTACH_TRACE_AND_VIDEO: "false"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -85,6 +90,12 @@ jobs:
           name: allure-results-ui-smoke
           path: reports/allure-results
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-output-ui-smoke
+          path: reports/playwright
+          if-no-files-found: ignore
 
   ui-full:
     runs-on: ubuntu-latest
@@ -116,6 +127,12 @@ jobs:
           name: allure-results-ui-full
           path: reports/allure-results
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-output-ui-full
+          path: reports/playwright
+          if-no-files-found: ignore
 
   visual:
     runs-on: ubuntu-latest
@@ -146,6 +163,12 @@ jobs:
         with:
           name: allure-results-visual
           path: reports/allure-results
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-output-visual
+          path: reports/playwright
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()
@@ -183,6 +206,12 @@ jobs:
         with:
           name: allure-results-accessibility
           path: reports/allure-results
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-output-accessibility
+          path: reports/playwright
           if-no-files-found: ignore
 
   cross-browser:
@@ -224,6 +253,12 @@ jobs:
         with:
           name: allure-results-cross-browser-${{ matrix.browser }}
           path: reports/allure-results
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-output-cross-browser-${{ matrix.browser }}
+          path: reports/playwright
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()
