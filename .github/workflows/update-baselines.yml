@@ -30,7 +30,7 @@ jobs:
       - run: pip install -r requirements.lock
       - run: playwright install --with-deps chromium firefox webkit
       - run: pytest steps/visual --update-baselines --browser chromium --browser firefox --browser webkit -q --tb=short
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         with:
           add-paths: baselines/linux
           branch: update-linux-baselines
