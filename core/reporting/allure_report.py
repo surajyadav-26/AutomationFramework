@@ -37,8 +37,8 @@ def generate_and_open(results_dir: Path, report_dir: Path, theme: str) -> str:
     apply_theme(report_dir, theme)
     flags = 0
     if sys.platform == "win32":
-        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-    # `allure open` serves the report until stopped, so it must outlive pytest
+        flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+    # `allure open` serves the report until stopped, so it must outlive pytest; no console window
     subprocess.Popen(
         [allure, "open", str(report_dir)],
         stdin=subprocess.DEVNULL,
