@@ -9,7 +9,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -31,7 +31,7 @@ jobs:
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check required secrets
         run: |
           for name in APP_PASSWORD API_PASSWORD; do
@@ -62,7 +62,7 @@ jobs:
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check required secrets
         run: |
           for name in APP_PASSWORD API_PASSWORD; do
@@ -93,7 +93,7 @@ jobs:
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check required secrets
         run: |
           for name in APP_PASSWORD API_PASSWORD; do
@@ -124,7 +124,7 @@ jobs:
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check required secrets
         run: |
           for name in APP_PASSWORD API_PASSWORD; do
@@ -161,7 +161,7 @@ jobs:
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check required secrets
         run: |
           for name in APP_PASSWORD API_PASSWORD; do
@@ -196,7 +196,7 @@ jobs:
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
       API_PASSWORD: ${{ secrets.API_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check required secrets
         run: |
           for name in APP_PASSWORD API_PASSWORD; do
@@ -245,7 +245,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
