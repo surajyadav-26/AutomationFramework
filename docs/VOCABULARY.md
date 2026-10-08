@@ -17,6 +17,7 @@ Wording per suite. Parameters are in `{braces}`. A step text may appear once per
 - Then the response message is "{message}"
 
 ## Visual (steps/visual/test_login_visual_steps.py)
+- Given I am using a phone-sized screen (375x667; baselines are stored per viewport)
 - Given I am viewing the login page
 - When I sign in as the "{role}" user
 - Then the login page matches the baseline

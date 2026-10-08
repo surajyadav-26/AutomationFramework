@@ -9,6 +9,14 @@ from core.data.factories import username_for
 scenarios("visual/login_visual.feature")
 
 
+PHONE_SCREEN = (375, 667)
+
+
+@given("I am using a phone-sized screen")
+def _use_phone_screen(login_page):
+    login_page.resize(*PHONE_SCREEN)
+
+
 @given("I am viewing the login page")
 def _open_login_page(login_page):
     login_page.open()

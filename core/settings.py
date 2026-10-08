@@ -84,6 +84,7 @@ class Settings:
     api_mode: str = "live"  # live: the real service; stub: in-process fake for offline runs
     rerun_count: int = 1  # reruns of a test after an infrastructure error (0 disables)
     rerun_delay: float = 1.0  # seconds between reruns
+    visual_ignore_antialiasing: bool = False  # ignore 1-2px wide diffs (anti-aliasing noise)
 
     @property
     def app_password(self) -> str:
@@ -116,4 +117,5 @@ def get_settings() -> Settings:
         api_mode=_choice("API_MODE", "live", API_MODES),
         rerun_count=_int("RERUN_COUNT", 1),
         rerun_delay=_float("RERUN_DELAY", 1.0),
+        visual_ignore_antialiasing=_bool("VISUAL_IGNORE_ANTIALIASING", False),
     )

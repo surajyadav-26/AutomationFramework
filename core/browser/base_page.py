@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Iterable
 
 from playwright.sync_api import Locator, Page, expect
 
@@ -15,6 +16,11 @@ _STABILISE_CSS = """
     caret-color: transparent !important;
 }
 """
+
+
+def hide_css(selectors: Iterable[str]) -> str:
+    """CSS that makes the elements invisible but keeps their space, so layout is unchanged."""
+    return "\n".join(f"{selector} {{ visibility: hidden !important; }}" for selector in selectors)
 
 
 class BasePage:
@@ -30,6 +36,10 @@ class BasePage:
         self.log.info("open %s", url)
         self.page.goto(url)
 
+    def resize(self, width: int, height: int) -> None:
+        self.log.info("resize viewport to %dx%d", width, height)
+        self.page.set_viewport_size({"width": width, "height": height})
+
     def by_test(self, test_id: str) -> Locator:
         """Locator by test id; the attribute is configured as data-test in the root conftest."""
         return self.page.get_by_test_id(test_id)
@@ -38,9 +48,16 @@ class BasePage:
         self.log.info("expect url contains %r", fragment)
         expect(self.page).to_have_url(re.compile(re.escape(fragment)))
 
-    def screenshot(self, mask: list[Locator] | None = None) -> bytes:
-        """Viewport PNG with animations disabled, caret hidden and optional masked areas."""
-        self.log.info("screenshot (%d masked area(s))", len(mask or []))
+    def screenshot(self, mask: list[Locator] | None = None, hide: Iterable[str] = ()) -> bytes:
+        """Viewport PNG with animations disabled and the caret hidden.
+
+        mask: locators painted over with a solid box (the box follows the element size).
+        hide: CSS selectors made invisible in place (use for text whose width changes).
+        """
+        hide = list(hide)
+        self.log.info("screenshot (%d masked, %d hidden selector(s))", len(mask or []), len(hide))
         self.page.add_style_tag(content=_STABILISE_CSS)
         self.page.wait_for_load_state("networkidle")
-        return self.page.screenshot(animations="disabled", caret="hide", mask=mask or [])
+        return self.page.screenshot(
+            animations="disabled", caret="hide", mask=mask or [], style=hide_css(hide) or None
+        )

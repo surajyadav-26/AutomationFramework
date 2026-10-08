@@ -9,9 +9,9 @@ from core.browser.base_page import BasePage
 
 class DashboardPage(BasePage):
     path = "/inventory.html"
-    # visual_user gets randomised prices on every load and the price box width follows the
-    # text, so the whole (fixed-width) price bar is masked, Add to cart buttons included.
-    volatile_selectors = (".pricebar",)
+    # visual_user gets randomised prices on every load. Hiding (not masking) them keeps the
+    # layout and the Add to cart buttons in the screenshot; only the price text is left out.
+    hidden_selectors = ('[data-test="inventory-item-price"]',)
 
     def expect_loaded(self) -> None:
         self.log.info("expect products page loaded")

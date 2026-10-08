@@ -6,7 +6,7 @@ import io
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageFilter
 
 from core.visual.masking import Region, paint_regions
 
@@ -38,7 +38,14 @@ def compare(
     regions: Iterable[Region] = (),
     max_ratio: float = MAX_DIFF_RATIO,
     tolerance: int = PIXEL_TOLERANCE,
+    ignore_antialiasing: bool = False,
 ) -> Comparison:
+    """Compare two PNGs.
+
+    ignore_antialiasing drops differences that are only 1-2 pixels wide (the signature of font and
+    edge anti-aliasing), by eroding the changed-pixel mask. Real changes of that thickness, such as
+    a 1px border colour change, are then ignored too, so it is opt-in.
+    """
     img_a, img_b = _load(actual), _load(baseline)
     if img_a.size != img_b.size:
         return Comparison(
@@ -52,6 +59,8 @@ def compare(
     r, g, b = diff.split()
     worst = ImageChops.lighter(ImageChops.lighter(r, g), b)
     changed = worst.point(lambda v: 255 if v > tolerance else 0)
+    if ignore_antialiasing:
+        changed = changed.filter(ImageFilter.MinFilter(3))
     ratio = changed.histogram()[255] / (img_a.width * img_a.height)
 
     overlay = Image.new("RGB", img_a.size, (255, 0, 0))

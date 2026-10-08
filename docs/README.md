@@ -94,6 +94,19 @@ Baselines are stored per `baselines/<os>/<browser>/<WxH>/<name>.png`.
 
 CI first-time setup (remote, secrets, linux baselines): see [CI_SETUP.md](CI_SETUP.md).
 
+## Visual testing details
+- **Viewports:** desktop 1280x720 and a phone 375x667 (`I am using a phone-sized screen`). Baselines
+  are keyed by the page's actual viewport, so the two never share a file.
+- **Volatile content:** page objects declare `hidden_selectors` (made invisible in place, layout and
+  neighbours stay in the picture, e.g. the random prices) or `masked_selectors` (painted over with a
+  solid box that follows the element size).
+- **Anti-aliasing:** `VISUAL_IGNORE_ANTIALIASING=true` ignores differences only 1-2 pixels wide. Off by
+  default because it would also hide a real 1px change such as a border colour.
+- **Per test limit:** `assert_matches_baseline(name, page_object, max_ratio=...)` overrides the 0.1%.
+- Failures save `<name>-<browser>-<WxH>-actual.png` / `-diff.png` in `reports/visual/`.
+- In CI, the `cross-browser` job adds the visual suite for firefox and webkit once their linux
+  baselines are committed.
+
 ## Reliability settings (`.env`)
 | Key | Default | Meaning |
 |---|---|---|
