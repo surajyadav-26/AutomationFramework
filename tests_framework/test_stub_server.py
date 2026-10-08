@@ -49,10 +49,11 @@ def test_invalid_json_is_a_400_not_a_crash(stub):
 def test_servers_use_free_ports_and_stop_cleanly():
     first = StubAuthServer("a", "b").start()
     second = StubAuthServer("a", "b").start()
+    first_url = first.url
     try:
-        assert first.url != second.url
+        assert first_url != second.url
     finally:
         first.stop()
         second.stop()
     with pytest.raises(requests.exceptions.ConnectionError):
-        requests.get(first.url, timeout=2)
+        requests.get(first_url, timeout=2)
