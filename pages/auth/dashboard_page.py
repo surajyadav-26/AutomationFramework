@@ -9,6 +9,9 @@ from core.browser.base_page import BasePage
 
 class DashboardPage(BasePage):
     path = "/inventory.html"
+    # visual_user gets randomised prices on every load and the price box width follows the
+    # text, so the whole (fixed-width) price bar is masked, Add to cart buttons included.
+    volatile_selectors = (".pricebar",)
 
     def expect_loaded(self) -> None:
         self.expect_url_contains("/inventory.html")
