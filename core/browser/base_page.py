@@ -48,6 +48,15 @@ class BasePage:
         self.log.info("expect url contains %r", fragment)
         expect(self.page).to_have_url(re.compile(re.escape(fragment)))
 
+    def wait_until_rendered(self) -> None:
+        """Wait for what changes pixels: the load event, web fonts and every image.
+
+        Playwright discourages "networkidle": a page that keeps polling never reaches it.
+        """
+        self.page.wait_for_load_state("load")
+        self.page.evaluate("document.fonts.ready.then(() => true)")
+        self.page.wait_for_function("Array.from(document.images).every(image => image.complete)")
+
     def screenshot(self, mask: list[Locator] | None = None, hide: Iterable[str] = ()) -> bytes:
         """Viewport PNG with animations disabled and the caret hidden.
 
@@ -57,7 +66,7 @@ class BasePage:
         hide = list(hide)
         self.log.info("screenshot (%d masked, %d hidden selector(s))", len(mask or []), len(hide))
         self.page.add_style_tag(content=_STABILISE_CSS)
-        self.page.wait_for_load_state("networkidle")
+        self.wait_until_rendered()
         return self.page.screenshot(
             animations="disabled", caret="hide", mask=mask or [], style=hide_css(hide) or None
         )

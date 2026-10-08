@@ -79,6 +79,12 @@ class FakePage:
     def wait_for_load_state(self, state):
         self.calls.append(("wait", state))
 
+    def evaluate(self, script):
+        self.calls.append(("evaluate", script))
+
+    def wait_for_function(self, script):
+        self.calls.append(("wait_for_function", script))
+
     def screenshot(self, **kwargs):
         self.calls.append(("screenshot", kwargs))
         return b"png"
@@ -99,6 +105,21 @@ def test_screenshot_passes_hide_css_and_stabilising_options():
     assert options["animations"] == "disabled"
     assert options["caret"] == "hide"
     assert options["mask"] == []
+
+
+def test_screenshot_waits_for_fonts_and_images_not_for_network_idle():
+    page = FakePage()
+    BasePage(page, "https://x.example").screenshot()
+    waits = [call for call in page.calls if call[0] in ("wait", "evaluate", "wait_for_function")]
+    assert ("wait", "load") in waits
+    assert any("fonts.ready" in str(call[1]) for call in waits)
+    assert any("document.images" in str(call[1]) for call in waits)
+    assert ("wait", "networkidle") not in waits
+    assert [call[0] for call in page.calls].index("screenshot") > max(
+        i
+        for i, call in enumerate(page.calls)
+        if call[0] in ("wait", "evaluate", "wait_for_function")
+    )
 
 
 def test_screenshot_without_hide_sends_no_style():

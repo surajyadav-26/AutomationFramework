@@ -17,7 +17,7 @@ def assert_accessible(page: Page, settings: Settings) -> Callable[[str], None]:
     """Scan the current page; fail on violations at or above A11Y_FAIL_IMPACT."""
 
     def check(name: str) -> None:
-        violations = scan(page)
+        violations = scan(page, settings.a11y_include_best_practices)
         failing = blocking(violations, settings.a11y_fail_impact)
         assert not failing, (
             f"{name}: {len(failing)} accessibility violation(s) at "

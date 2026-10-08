@@ -1,5 +1,5 @@
 """Fail on selectors, URLs or raw HTTP in step files, fragile locators and sleeps, duplicate step
-text and untagged features.
+text, untagged features, malformed or orphan visual baselines, and leaked secrets.
 
 Usage: python tools/check_rules.py [root]   (root defaults to the repository root)
 """
@@ -9,6 +9,7 @@ from __future__ import annotations
 import ast
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -107,6 +108,59 @@ def check_features(root: Path) -> list[str]:
     return errors
 
 
+# --- visual baselines ----------------------------------------------------------------------------
+BASELINE_OSES = {"linux", "windows", "macos"}
+BASELINE_BROWSERS = {"chromium", "firefox", "webkit"}
+LOCAL_ONLY_OSES = ("windows", "macos")  # gitignored; the CI runner (linux) is the truth
+BASELINE_NAME_USE = re.compile(r"assert_matches_baseline\(\s*\"([a-z0-9_]+)\"")
+
+
+def check_baselines(root: Path) -> list[str]:
+    """Baselines are baselines/<os>/<browser>/<WxH>/<name>.png, the name is used by a visual step,
+    and nothing but linux baselines is committed."""
+    folder = root / "baselines"
+    if not folder.exists():
+        return []
+    used = set()
+    for path in (root / "steps" / "visual").rglob("*.py") if (root / "steps").exists() else []:
+        used |= set(BASELINE_NAME_USE.findall(path.read_text(encoding="utf-8")))
+    errors = []
+    for path in sorted(folder.rglob("*.png")):
+        parts = path.relative_to(folder).parts
+        label = path.relative_to(root).as_posix()
+        if len(parts) != 4:
+            errors.append(f"{label}: expected baselines/<os>/<browser>/<WxH>/<name>.png")
+            continue
+        os_name, browser, size, file_name = parts
+        if os_name not in BASELINE_OSES:
+            errors.append(f"{label}: unknown OS folder '{os_name}'")
+        if browser not in BASELINE_BROWSERS:
+            errors.append(f"{label}: unknown browser folder '{browser}'")
+        if not re.fullmatch(r"\d+x\d+", size):
+            errors.append(f"{label}: viewport folder '{size}' is not <width>x<height>")
+        if used and file_name[: -len(".png")] not in used:
+            errors.append(f"{label}: no visual step checks a baseline with this name (orphan)")
+    errors += committed_local_baselines(root)
+    return errors
+
+
+def committed_local_baselines(root: Path) -> list[str]:
+    """Windows and macOS baselines must stay local: rendering differs from the CI runner."""
+    if not (root / ".git").exists():
+        return []
+    try:
+        listed = subprocess.run(
+            ["git", "ls-files", "baselines"], cwd=root, capture_output=True, text=True, check=True
+        ).stdout.splitlines()
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [
+        f"{name}: local-only baseline is committed (only linux baselines belong in git)"
+        for name in listed
+        if name.split("/")[1:2] and name.split("/")[1] in LOCAL_ONLY_OSES
+    ]
+
+
 # --- secrets -------------------------------------------------------------------------------------
 SECRET_ASSIGNMENT = re.compile(
     r"\b[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|API_?KEY)[A-Z0-9_]*\s*[=:]\s*[\"']?"
@@ -164,7 +218,13 @@ def check_secrets(root: Path) -> list[str]:
 
 def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path(__file__).resolve().parent.parent
-    errors = check_steps(root) + check_locators(root) + check_features(root) + check_secrets(root)
+    errors = (
+        check_steps(root)
+        + check_locators(root)
+        + check_features(root)
+        + check_baselines(root)
+        + check_secrets(root)
+    )
     for error in errors:
         print(error)
     print(f"check_rules: {'FAILED' if errors else 'ok'} ({len(errors)} problem(s))")

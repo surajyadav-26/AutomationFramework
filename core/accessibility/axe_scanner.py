@@ -7,13 +7,19 @@ from axe_playwright_python.sync_playwright import Axe
 from core.reporting.allure_helpers import attach_json
 from core.settings import IMPACTS
 
-# WCAG 2.0/2.1/2.2 level A and AA rules; best-practice rules are reported by axe but not scanned.
+# WCAG 2.0/2.1/2.2 level A and AA rules, plus axe's own best-practice rules when asked for.
 WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
+BEST_PRACTICE_TAG = "best-practice"
 
 
-def scan(page) -> list[dict]:
-    """Run axe on the current page and return its violations (all impacts)."""
-    result = Axe().run(page, options={"runOnly": {"type": "tag", "values": WCAG_TAGS}})
+def scan(page, include_best_practices: bool = False) -> list[dict]:
+    """Run axe on the current page and return its violations (all impacts).
+
+    Best-practice violations are mostly moderate or minor, so they show up in the report without
+    failing a test at the default A11Y_FAIL_IMPACT.
+    """
+    tags = WCAG_TAGS + [BEST_PRACTICE_TAG] if include_best_practices else WCAG_TAGS
+    result = Axe().run(page, options={"runOnly": {"type": "tag", "values": tags}})
     violations = result.response["violations"]
     attach_json(violations, f"Accessibility violations ({len(violations)})")
     return violations

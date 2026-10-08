@@ -95,6 +95,7 @@ class Settings:
     allure_auto_open: bool = True  # generate and open the report after the run (never in CI)
     allure_theme: str = "dark"
     a11y_fail_impact: str = "serious"  # lowest impact that fails an accessibility test
+    a11y_include_best_practices: bool = True  # also scan axe best-practice rules (reported)
     api_timeout: float = 15.0  # seconds per API request
     api_mode: str = "live"  # live: the real service; stub: in-process fake for offline runs
     rerun_count: int = 1  # reruns of a test after an infrastructure error (0 disables)
@@ -131,6 +132,7 @@ def get_settings() -> Settings:
         allure_auto_open=_bool("ALLURE_AUTO_OPEN", True) and not os.getenv("CI"),
         allure_theme=_choice("ALLURE_THEME", "dark", ALLURE_THEMES),
         a11y_fail_impact=_choice("A11Y_FAIL_IMPACT", "serious", IMPACTS),
+        a11y_include_best_practices=_bool("A11Y_INCLUDE_BEST_PRACTICES", True),
         api_timeout=_float("API_TIMEOUT", 15.0, minimum=0.1),
         api_mode=_choice("API_MODE", "live", API_MODES),
         rerun_count=_int("RERUN_COUNT", 1),

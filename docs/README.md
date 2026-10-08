@@ -41,6 +41,7 @@ variables. Precedence, highest first: real environment variables, `.env.<TEST_EN
 | `ATTACH_TRACE_AND_VIDEO` | `true` | put trace and video in the Allure report. **A trace records typed passwords**, so CI sets this to `false`; traces then stay in the run's private `playwright-output` artifact |
 | `ALLURE_AUTO_OPEN` / `ALLURE_THEME` | `true` / `dark` | open the report after a run (never in CI); `dark` or `light` |
 | `A11Y_FAIL_IMPACT` | `serious` | lowest axe impact that fails an accessibility test |
+| `A11Y_INCLUDE_BEST_PRACTICES` | `true` | also scan axe best-practice rules; they are reported and only fail a test if the impact threshold is set low |
 | `API_TIMEOUT` / `API_MODE` | `15` / `live` | request timeout in seconds; `live` or offline `stub` |
 | `RERUN_COUNT` / `RERUN_DELAY` | `1` / `1` | reruns after infrastructure errors only, and the pause in seconds |
 | `VISUAL_IGNORE_ANTIALIASING` | `false` | ignore 1-2px wide visual differences |
@@ -70,7 +71,8 @@ Passing `--tracing` / `--video` on the command line overrides `.env`.
 `@accessibility` scenarios scan the page with axe-core (axe-playwright-python) against WCAG 2.x
 level A/AA rules. A test fails on violations at or above `A11Y_FAIL_IMPACT` (default `serious`);
 every violation, whatever its impact, is attached to the Allure report as JSON. axe best-practice
-rules (for example `page-has-heading-one`, `region`, both moderate on saucedemo) are not scanned.
+rules (for example `page-has-heading-one`, `region`, both moderate on saucedemo) are scanned too
+(`A11Y_INCLUDE_BEST_PRACTICES`); at the default threshold they are reported without failing a test.
 
 ## Cross-browser
 Browser suites (ui, accessibility, visual) run on chromium by default. Pick browsers with the
@@ -146,6 +148,9 @@ CI first-time setup (remote, secrets, linux baselines): see [CI_SETUP.md](CI_SET
 - **Anti-aliasing:** `VISUAL_IGNORE_ANTIALIASING=true` ignores differences only 1-2 pixels wide. Off by
   default because it would also hide a real 1px change such as a border colour.
 - **Per test limit:** `assert_matches_baseline(name, page_object, max_ratio=...)` overrides the 0.1%.
+- `tools/check_rules.py` checks the baseline folder: layout `<os>/<browser>/<WxH>/<name>.png`, no orphan
+  images that no step uses, and no committed windows/macos baselines.
+- Screenshots wait for the load event, web fonts and all images (not for "network idle").
 - Failures save `<name>-<browser>-<WxH>-actual.png` / `-diff.png` in `reports/visual/`.
 - In CI, the `cross-browser` job adds the visual suite for firefox and webkit once their linux
   baselines are committed.

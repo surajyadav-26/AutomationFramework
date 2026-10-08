@@ -39,6 +39,14 @@ def test_scan_runs_only_the_wcag_tags_and_returns_every_violation(fake_axe):
     assert attachments == ["Accessibility violations (2)"]
 
 
+def test_best_practice_rules_are_added_only_on_request(fake_axe):
+    calls, _ = fake_axe
+    scan("PAGE", include_best_practices=True)
+    assert calls["options"]["runOnly"]["values"] == [*WCAG_TAGS, "best-practice"]
+    scan("PAGE")
+    assert calls["options"]["runOnly"]["values"] == WCAG_TAGS
+
+
 def test_scan_with_no_violations(fake_axe):
     _, attachments = fake_axe
     assert scan("PAGE") == []
