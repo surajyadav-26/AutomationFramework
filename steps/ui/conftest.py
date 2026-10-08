@@ -6,8 +6,8 @@ import pytest
 from playwright.sync_api import Page
 
 from core.settings import Settings
-from pages.auth.dashboard_page import DashboardPage
-from pages.auth.login_page import LoginPage
+from pages.dashboard_page import DashboardPage
+from pages.login_page import LoginPage
 
 
 @pytest.fixture

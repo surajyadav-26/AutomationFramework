@@ -13,8 +13,8 @@ from core.settings import ROOT, VIEWPORT, Settings
 from core.visual import baseline_store
 from core.visual.comparator import compare
 from core.visual.masking import locators_for
-from pages.auth.dashboard_page import DashboardPage
-from pages.auth.login_page import LoginPage
+from pages.dashboard_page import DashboardPage
+from pages.login_page import LoginPage
 
 DIFF_DIR = ROOT / "reports" / "visual"
 
