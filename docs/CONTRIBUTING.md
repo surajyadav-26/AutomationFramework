@@ -18,6 +18,7 @@
    `pip freeze` after an intentional dependency change).
 
 ## Locator guidelines
+Full cheat sheet: [LOCATORS.md](LOCATORS.md).
 - Prefer `get_by_role`, then `get_by_label`, then `get_by_text`: they describe what a user sees
   and double as a basic accessibility check.
 - Use `get_by_test_id` (our `by_test()`, attribute `data-test`) when the page has no stable
