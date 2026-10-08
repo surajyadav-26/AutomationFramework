@@ -270,7 +270,7 @@ jobs:
         run: python tools/ci_summary.py reports/allure-results >> "$GITHUB_STEP_SUMMARY"
       - name: Restore report history
         if: steps.has_results.outputs.found == 'true'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: allure-history
           key: allure-history-${{ github.run_id }}
@@ -289,7 +289,7 @@ jobs:
           cp -r reports/allure-report/history allure-history
       - name: Save report history
         if: steps.has_results.outputs.found == 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: allure-history
           key: allure-history-${{ github.run_id }}
