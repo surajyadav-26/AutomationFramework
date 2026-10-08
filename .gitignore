@@ -5,6 +5,7 @@ __pycache__/
 .ruff_cache/
 .env
 reports/
+logs/
 # local-only baselines; only linux (CI) baselines are the source of truth
 baselines/windows/
 baselines/macos/

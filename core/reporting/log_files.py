@@ -8,7 +8,7 @@ from pathlib import Path
 
 from core.settings import ROOT
 
-LOG_DIR = ROOT / "reports" / "logs"
+LOG_DIR = ROOT / "logs"
 PREFIX = "application-"
 
 
