@@ -92,12 +92,28 @@ job stays on chromium.
 | Architecture | `lint-imports`, `python tools/check_rules.py` | layering, no selectors/URLs/HTTP in steps, locator rules |
 | Static typing | `mypy` (config in `pyproject.toml`) | type errors in `core`, `pages`, `clients`, `tools`, `steps` |
 | Framework self-tests | `make test-framework` | behaviour of `core/` and `tools/`, with a **95% coverage** floor |
+| Environment | `make doctor` (`tools/check_env.py`) | installed packages equal the lock files, Python matches `.python-version`, every direct dependency is pinned |
 | Dependency scan | `make audit` (`pip-audit`) | known vulnerabilities in the pinned packages |
 
 `make check` runs the first three; the CI `lint` job runs all of them. Tool pins live in
 `requirements-quality.lock` (kept apart from `requirements.lock` so test jobs install less). To work on
 the framework itself: `make install-dev`. Using a virtualenv is recommended; a clean one built from the
 two lock files passes every gate.
+
+### Reproducible environment
+- `requirements.in` / `requirements-quality.in` list the **direct** dependencies; `requirements.lock` /
+  `requirements-quality.lock` pin them and everything they pull in. `.python-version` is `3.12`.
+- `make doctor` tells you whether the Python you are using matches all of that (it warns about the old
+  `allure-pytest` package that clashes with `allure-pytest-bdd`). It runs in the CI `lint` job too.
+- No virtualenv is required, but a clean one built from the two lock files passes every gate.
+- To change dependencies: edit the `.in` file, build a clean virtualenv from it, run `pip freeze` into the
+  lock file (for the quality lock keep only the pins that are not in `requirements.lock`), then `make doctor`.
+  Add libraries only after agreeing it with the team.
+
+### CI hardening
+`ci.yml` runs with read-only repository permissions (only the `report` job asks for Pages access), every
+job has a 30 minute timeout, and a newer push to the same pull request cancels the older run. Runs on
+`main` are never cancelled.
 
 ### Per-environment secrets
 Precedence, highest first: real environment variables, `.env.<TEST_ENV>` (for example `.env.stage`),

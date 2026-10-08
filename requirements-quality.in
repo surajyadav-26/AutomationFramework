@@ -1,0 +1,5 @@
+# Tools that check the framework itself (not needed to run the tests). Pinned in requirements-quality.lock.
+mypy
+types-requests
+pip-audit
+pytest-cov

@@ -9,6 +9,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
       API_PASSWORD: ${{ secrets.API_PASSWORD }}

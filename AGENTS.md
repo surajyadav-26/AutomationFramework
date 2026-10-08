@@ -22,7 +22,7 @@ checks against saucedemo.com and dummyjson.com. No Docker anywhere.
 - Never skip, xfail or delete a failing test to pass a gate. Fix the root cause.
 
 ## Commands
-`make install | check | api | ui | smoke | visual | accessibility | cross-browser | test-framework | audit | update-baselines | parallel | report | serve`
+`make install | check | api | ui | smoke | visual | accessibility | cross-browser | test-framework | audit | doctor | update-baselines | parallel | report | serve`
 
 Framework code (core/, tools/) is covered by tests_framework/ (coverage gate 95%); run `make test-framework`
 after changing either. `make check` also runs mypy; add type hints to new code.
