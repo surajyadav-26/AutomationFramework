@@ -302,7 +302,7 @@ jobs:
       - name: Publish to GitHub Pages (main only)
         continue-on-error: true  # the repo setting Pages > Source > GitHub Actions may not be on yet
         if: steps.has_results.outputs.found == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: reports/allure-report
       - name: Deploy to GitHub Pages
