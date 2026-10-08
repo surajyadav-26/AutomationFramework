@@ -37,9 +37,10 @@ Login-only tests create nothing, so none of them registers cleanup yet. When a s
 ```python
 from core.data.factories import unique
 
+
 @when("I create a customer", target_fixture="customer")
 def _create(customer_client, cleanup):
-    customer = customer_client.create(name=unique("cust"))      # unique values: no clashes in parallel
+    customer = customer_client.create(name=unique("cust"))  # unique values: no clashes in parallel
     cleanup.register(lambda: customer_client.delete(customer["id"]), "delete customer")
     return customer
 ```
