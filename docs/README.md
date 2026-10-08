@@ -8,6 +8,7 @@ Playwright, requests, Allure. No Docker anywhere.
 | UI     | https://www.saucedemo.com                | features/ui/auth/login.feature                 |
 | API    | https://dummyjson.com `POST /auth/login` | features/api/auth/user.feature                 |
 | Visual | https://www.saucedemo.com                | features/visual/auth/login_visual.feature      |
+| Accessibility | https://www.saucedemo.com         | features/accessibility/auth/login_accessibility.feature |
 
 ## Setup
 ```
@@ -20,7 +21,7 @@ the `APP_PASSWORD` / `API_PASSWORD` environment variables (or your gitignored `.
 In CI they are read from the repository secrets of the same names.
 
 ## Run
-`make api | ui | smoke | visual | parallel | check`, `make report` / `make serve` (needs the
+`make api | ui | smoke | visual | accessibility | cross-browser | parallel | check`, `make report` / `make serve` (needs the
 Allure CLI installed separately). Allure results are written to `reports/allure-results`
 together with `environment.properties`; failure screenshots, API request/response and visual
 Baseline/Actual/Diff images are attached.
@@ -32,12 +33,30 @@ Baseline/Actual/Diff images are attached.
 | `TRACE_MODE` | `retain-on-failure` | Playwright trace: `off`, `on` or `retain-on-failure` |
 | `VIDEO_MODE` | `retain-on-failure` | Playwright video: `off`, `on` or `retain-on-failure` |
 | `ALLURE_AUTO_OPEN` | `true` | build `reports/allure-report` and open it in the browser when a run ends (needs the Allure CLI on PATH; never when `CI` is set) |
+| `A11Y_FAIL_IMPACT` | `serious` | lowest axe impact that fails an accessibility test: `minor`, `moderate`, `serious`, `critical` |
 | `ALLURE_THEME` | `dark` | report theme `dark` or `light`; a theme the viewer picked in the browser wins |
 
 One log file per day, `logs/application-YYYY-MM-DD.log`, is shared by ui, api and visual
 (and by parallel workers; lines carry the process id). Traces and videos are written to
 `reports/playwright/`; open a trace with `python -m playwright show-trace <trace.zip>`.
 Passing `--tracing` / `--video` on the command line overrides `.env`.
+
+## Accessibility
+`@accessibility` scenarios scan the page with axe-core (axe-playwright-python) against WCAG 2.x
+level A/AA rules. A test fails on violations at or above `A11Y_FAIL_IMPACT` (default `serious`);
+every violation, whatever its impact, is attached to the Allure report as JSON. axe best-practice
+rules (for example `page-has-heading-one`, `region`, both moderate on saucedemo) are not scanned.
+
+## Cross-browser
+Browser suites (ui, accessibility, visual) run on chromium by default. Pick browsers with the
+pytest-playwright option, repeated per browser: `pytest steps --browser firefox --browser webkit`,
+or `make cross-browser` for all three. The API suite is browser independent and runs once.
+Visual baselines are per browser (`baselines/<os>/<browser>/...`), so firefox and webkit
+baselines must be generated before their visual tests pass (`make update-baselines` locally, or the
+*update-baselines* workflow for linux, which now covers all three browsers). In Allure a
+cross-browser run shows one group per browser, e.g. `UI / Auth (firefox)`.
+CI: the `cross-browser` job runs ui and accessibility on firefox and webkit; the regular `visual`
+job stays on chromium.
 
 ## Allure suites
 The Suites tab groups tests by suite type. A full run shows `UI`, `API` and `Visual` at the top

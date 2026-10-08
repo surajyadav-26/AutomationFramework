@@ -32,7 +32,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium
+      - run: playwright install --with-deps chromium firefox webkit
       - run: pytest steps/api -q --tb=short
       - uses: actions/upload-artifact@v4
         if: always()
@@ -54,7 +54,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium
+      - run: playwright install --with-deps chromium firefox webkit
       - run: pytest steps/ui -m smoke -q --tb=short
       - uses: actions/upload-artifact@v4
         if: always()
@@ -76,7 +76,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium
+      - run: playwright install --with-deps chromium firefox webkit
       - run: pytest steps/ui -q --tb=short -n 2
       - uses: actions/upload-artifact@v4
         if: always()
@@ -98,7 +98,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.lock
-      - run: playwright install --with-deps chromium
+      - run: playwright install --with-deps chromium firefox webkit
       - run: pytest steps/visual -q --tb=short
       - uses: actions/upload-artifact@v4
         if: always()
@@ -111,4 +111,52 @@ jobs:
         with:
           name: visual-diffs
           path: reports/visual
+          if-no-files-found: ignore
+
+  accessibility:
+    runs-on: ubuntu-latest
+    needs: ui-full
+    env:
+      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      API_PASSWORD: ${{ secrets.API_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.lock
+      - run: playwright install --with-deps chromium firefox webkit
+      - run: pytest steps/accessibility -q --tb=short
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-accessibility
+          path: reports/allure-results
+          if-no-files-found: ignore
+
+  cross-browser:
+    runs-on: ubuntu-latest
+    needs: ui-full
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    env:
+      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      API_PASSWORD: ${{ secrets.API_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.lock
+      - run: playwright install --with-deps chromium firefox webkit
+      - run: pytest steps/ui steps/accessibility -q --tb=short -n 2 --browser ${{ matrix.browser }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-cross-browser-${{ matrix.browser }}
+          path: reports/allure-results
           if-no-files-found: ignore

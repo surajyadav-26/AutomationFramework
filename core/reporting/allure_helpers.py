@@ -35,7 +35,7 @@ def write_environment_properties(results_dir: Path, properties: dict[str, str]) 
     return target
 
 
-SUITE_NAMES = {"ui": "UI", "api": "API", "visual": "Visual"}
+SUITE_NAMES = {"ui": "UI", "api": "API", "visual": "Visual", "accessibility": "Accessibility"}
 
 
 def suite_marks(markers: set[str], area: str, smoke_run: bool) -> list:

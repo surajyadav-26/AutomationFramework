@@ -52,8 +52,8 @@ def browser_context_args(browser_context_args: dict) -> dict:
     }
 
 
-def _browser_name(config: pytest.Config) -> str:
-    return (config.getoption("browser") or ["chromium"])[0]
+def _browser_names(config: pytest.Config) -> str:
+    return ", ".join(config.getoption("browser") or ["chromium"])
 
 
 def pytest_sessionfinish(session: pytest.Session) -> None:
@@ -70,7 +70,7 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
             "env": settings.env,
             "app_url": settings.app_url,
             "api_url": settings.api_url,
-            "browser": _browser_name(config),
+            "browser": _browser_names(config),
         },
     )
     if settings.allure_auto_open and session.testscollected and not config.getoption("collectonly"):

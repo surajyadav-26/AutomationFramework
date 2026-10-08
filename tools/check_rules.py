@@ -16,9 +16,13 @@ FORBIDDEN = {
         r"data-test|\.locator\(|get_by_|\bxpath\b|\bcss=|querySelector|[\"'][#.][\w-]+[\"']"
     ),
     "URL": re.compile(r"https?://"),
-    "raw HTTP": re.compile(r"\brequests\b|\bhttpx\b|\burllib\b|http\.client|\bsession\.(get|post)"),
+    "raw HTTP": re.compile(
+        r"\b(import|from)\s+(requests|httpx|urllib)\b"
+        r"|\brequests\.(get|post|put|patch|delete|request|Session)\b"
+        r"|\bhttpx\.|\burllib\.|\bhttp\.client\b|\bsession\.(get|post)\b"
+    ),
 }
-SUITE_TAGS = {"@ui", "@api", "@visual"}
+SUITE_TAGS = {"@ui", "@api", "@visual", "@accessibility"}
 
 
 def step_texts(tree: ast.AST) -> list[tuple[str, int]]:
@@ -49,7 +53,9 @@ def check_steps(root: Path) -> list[str]:
         source = path.read_text(encoding="utf-8")
         for lineno, line in enumerate(source.splitlines(), 1):
             code = line.split("#", 1)[0]
-            if code.lstrip().startswith(("import ", "from ")) and "requests" not in code:
+            if code.lstrip().startswith(("import ", "from ")) and not FORBIDDEN["raw HTTP"].search(
+                code
+            ):
                 continue
             for label, pattern in FORBIDDEN.items():
                 if pattern.search(code):
@@ -72,7 +78,9 @@ def check_features(root: Path) -> list[str]:
         lines = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
         tags = set(lines[0].split()) if lines and lines[0].startswith("@") else set()
         if not tags & SUITE_TAGS:
-            errors.append(f"{path.relative_to(root)}: first line must tag @ui, @api or @visual")
+            errors.append(
+                f"{path.relative_to(root)}: first line must tag @ui, @api, @visual, @accessibility"
+            )
     return errors
 
 

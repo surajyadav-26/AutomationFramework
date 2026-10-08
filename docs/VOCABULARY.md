@@ -22,4 +22,10 @@ Wording per suite. Parameters are in `{braces}`. A step text may appear once per
 - Then the login page matches the baseline
 - Then the inventory page matches the baseline
 
+## Accessibility (steps/accessibility/auth/test_login_accessibility_steps.py)
+- Given I am viewing the login page
+- When I sign in as the "{role}" user
+- Then the login page has no blocking accessibility violations
+- Then the inventory page has no blocking accessibility violations
+
 Roles come from `test_data/users.json`: standard, locked_out, problem, visual, no_username, api.

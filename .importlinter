@@ -25,10 +25,11 @@ forbidden_modules =
     pytest_playwright
 
 [importlinter:contract:browser-steps-no-clients]
-name = steps.ui and steps.visual never import clients
+name = steps.ui, steps.visual and steps.accessibility never import clients
 type = forbidden
 source_modules =
     steps.ui
     steps.visual
+    steps.accessibility
 forbidden_modules =
     clients

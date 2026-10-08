@@ -1,11 +1,11 @@
 PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest -q --tb=short
 
-.PHONY: install check api ui smoke visual update-baselines parallel report serve
+.PHONY: install check api ui smoke visual accessibility cross-browser update-baselines parallel report serve
 
 install:
 	$(PYTHON) -m pip install -r requirements.lock
-	$(PYTHON) -m playwright install --with-deps chromium
+	$(PYTHON) -m playwright install --with-deps chromium firefox webkit
 
 check:
 	$(PYTHON) -m ruff check .
@@ -24,6 +24,13 @@ smoke:
 
 visual:
 	$(PYTEST) steps/visual
+
+accessibility:
+	$(PYTEST) steps/accessibility
+
+# all browser-based suites on chromium, firefox and webkit (visual needs per-browser baselines)
+cross-browser:
+	$(PYTEST) steps/ui steps/accessibility steps/visual --browser chromium --browser firefox --browser webkit
 
 update-baselines:
 	$(PYTEST) steps/visual --update-baselines

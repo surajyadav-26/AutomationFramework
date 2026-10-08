@@ -29,6 +29,7 @@ def _require(name: str) -> str:
 TRACE_MODES = ("off", "on", "retain-on-failure")
 VIDEO_MODES = ("off", "on", "retain-on-failure")
 ALLURE_THEMES = ("dark", "light")
+IMPACTS = ("minor", "moderate", "serious", "critical")  # ascending severity
 
 
 def _choice(name: str, default: str, allowed: tuple[str, ...]) -> str:
@@ -66,6 +67,7 @@ class Settings:
     video_mode: str = "retain-on-failure"
     allure_auto_open: bool = True  # generate and open the report after the run (never in CI)
     allure_theme: str = "dark"
+    a11y_fail_impact: str = "serious"  # lowest impact that fails an accessibility test
 
     @property
     def app_password(self) -> str:
@@ -93,4 +95,5 @@ def get_settings() -> Settings:
         video_mode=_choice("VIDEO_MODE", "retain-on-failure", VIDEO_MODES),
         allure_auto_open=_bool("ALLURE_AUTO_OPEN", True) and not os.getenv("CI"),
         allure_theme=_choice("ALLURE_THEME", "dark", ALLURE_THEMES),
+        a11y_fail_impact=_choice("A11Y_FAIL_IMPACT", "serious", IMPACTS),
     )

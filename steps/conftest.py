@@ -34,6 +34,9 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     for item in items:
         markers = {m.name for m in item.iter_markers()}
         area = item.path.parent.name.replace("_", " ").title()  # steps/<suite>/<area>/
+        browser = getattr(item, "callspec", None) and item.callspec.params.get("browser_name")
+        if browser and len(config.getoption("browser") or []) > 1:
+            area = f"{area} ({browser})"  # cross-browser run: one group per browser
         for mark in suite_marks(markers, area, smoke_run):
             item.add_marker(mark)
 

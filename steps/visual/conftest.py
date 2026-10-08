@@ -64,3 +64,12 @@ def assert_matches_baseline(
         pytest.fail(f"visual mismatch for '{name}': {result.reason}", pytrace=False)
 
     return check
+
+
+@pytest.fixture(autouse=True)
+def browser_matrix(browser_name: str) -> str:
+    """Puts browser_name in the fixture closure so --browser X --browser Y runs every test on each.
+
+    pytest-bdd requests `page` dynamically, which pytest-playwright cannot see at collection.
+    """
+    return browser_name
