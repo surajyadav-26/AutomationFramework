@@ -13,20 +13,9 @@ from core.settings import ROOT, Settings
 from core.visual import baseline_store
 from core.visual.comparator import MAX_DIFF_RATIO, compare
 from core.visual.masking import locators_for
-from pages.dashboard_page import DashboardPage
-from pages.login_page import LoginPage
+from steps._browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
 
 DIFF_DIR = ROOT / "reports" / "visual"
-
-
-@pytest.fixture
-def login_page(page: Page, settings: Settings) -> LoginPage:
-    return LoginPage(page, settings.app_url)
-
-
-@pytest.fixture
-def dashboard_page(page: Page, settings: Settings) -> DashboardPage:
-    return DashboardPage(page, settings.app_url)
 
 
 @pytest.fixture
@@ -78,12 +67,3 @@ def assert_matches_baseline(
         pytest.fail(f"visual mismatch for '{name}' ({size}): {result.reason}", pytrace=False)
 
     return check
-
-
-@pytest.fixture(autouse=True)
-def browser_matrix(browser_name: str) -> str:
-    """Puts browser_name in the fixture closure so --browser X --browser Y runs every test on each.
-
-    pytest-bdd requests `page` dynamically, which pytest-playwright cannot see at collection.
-    """
-    return browser_name

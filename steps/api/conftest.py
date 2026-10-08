@@ -29,9 +29,3 @@ def api_base_url(settings: Settings) -> Iterator[str]:
 @pytest.fixture
 def user_client(api_base_url: str, settings: Settings) -> UserClient:
     return UserClient(HttpClient(api_base_url, timeout=settings.api_timeout))
-
-
-@pytest.fixture
-def response_holder() -> dict:
-    """Carries the last response from a When step to the Then steps."""
-    return {}

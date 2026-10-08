@@ -16,6 +16,7 @@ from dotenv import dotenv_values, load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 VIEWPORT = {"width": 1280, "height": 720}
+PHONE_VIEWPORT = {"width": 375, "height": 667}
 TIMEZONE = "UTC"
 LOCALE = "en-US"
 

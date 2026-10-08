@@ -42,7 +42,9 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         if browser and len(config.getoption("browser") or []) > 1:
             area = f"{area} ({browser})"  # cross-browser run: one group per browser
         for mark in suite_marks(markers, area, smoke_run):
-            item.add_marker(mark)
+            # without an active Allure plugin (no --alluredir) the decorators are inert placeholders
+            if isinstance(mark, str | pytest.MarkDecorator):
+                item.add_marker(mark)
 
 
 def _fixture(item: pytest.Item, name: str) -> Any:

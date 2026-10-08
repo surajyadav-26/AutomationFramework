@@ -2,23 +2,11 @@
 
 from __future__ import annotations
 
-from pytest_bdd import given, parsers, scenarios, then, when
+from pytest_bdd import scenarios, then
 
-from core.data.factories import username_for
+from steps._login_steps import *  # noqa: F403  (pytest-bdd registers steps per module)
 
 scenarios("accessibility/login_accessibility.feature")
-
-
-@given("I am viewing the login page")
-def _open_login_page(login_page):
-    login_page.open()
-    login_page.expect_loaded()
-
-
-@when(parsers.parse('I sign in as the "{role}" user'))
-def _sign_in(login_page, dashboard_page, settings, role):
-    login_page.login(username_for(role), settings.app_password)
-    dashboard_page.expect_loaded()
 
 
 @then("the login page has no blocking accessibility violations")

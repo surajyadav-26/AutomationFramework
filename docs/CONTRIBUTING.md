@@ -31,3 +31,21 @@ Full cheat sheet: [LOCATORS.md](LOCATORS.md).
 - Locators are lazy and auto-wait: do not add `time.sleep` or `wait_for_timeout`. Save a locator
   as a property or variable and reuse it (see `LoginPage.login_button`).
 - Keep every locator in `pages/`, never in step files.
+
+## Test data and cleanup (for stateful features)
+Login-only tests create nothing, so none of them registers cleanup yet. When a scenario creates data:
+```python
+from core.data.factories import unique
+
+@when("I create a customer", target_fixture="customer")
+def _create(customer_client, cleanup):
+    customer = customer_client.create(name=unique("cust"))      # unique values: no clashes in parallel
+    cleanup.register(lambda: customer_client.delete(customer["id"]), "delete customer")
+    return customer
+```
+The `cleanup` fixture (steps/conftest.py) runs the callbacks after the test, newest first, whether the
+test passed or failed, and reports any callback that raised. tests_framework/test_steps_conftest.py
+proves this with real pytest sessions. Pass data between steps with `target_fixture=`, not shared dicts.
+Steps that two suites need go in `steps/_login_steps.py`-style shared modules (star-imported, because
+pytest-bdd registers a step in the module that defines it); browser fixtures are in
+`steps/_browser_fixtures.py`.

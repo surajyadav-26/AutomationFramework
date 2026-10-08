@@ -1,6 +1,7 @@
 # Step vocabulary
 
-Wording per suite. Parameters are in `{braces}`. A step text may appear once per suite.
+Wording per suite. The two steps marked (shared) are defined once in `steps/_login_steps.py` and used by
+the visual and accessibility suites. Parameters are in `{braces}`. A step text may appear once per suite.
 
 ## UI (steps/ui/test_login_steps.py)
 - Given I am on the login page
@@ -18,8 +19,8 @@ Wording per suite. Parameters are in `{braces}`. A step text may appear once per
 
 ## Visual (steps/visual/test_login_visual_steps.py)
 - Given I am using a phone-sized screen (375x667; baselines are stored per viewport)
-- Given I am viewing the login page
-- When I sign in as the "{role}" user
+- Given I am viewing the login page (shared)
+- When I sign in as the "{role}" user (shared)
 - Then the login page matches the baseline
 - Then the inventory page matches the baseline
 
