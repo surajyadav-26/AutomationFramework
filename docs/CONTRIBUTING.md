@@ -16,3 +16,16 @@
    workflow and review the images in the resulting pull request.
 9. Do not hand-edit `reports/`, `baselines/` or `requirements.lock` (regenerate the lock with
    `pip freeze` after an intentional dependency change).
+
+## Locator guidelines
+- Prefer `get_by_role`, then `get_by_label`, then `get_by_text`: they describe what a user sees
+  and double as a basic accessibility check.
+- Use `get_by_test_id` (our `by_test()`, attribute `data-test`) when the page has no stable
+  user-facing handle.
+- Use CSS only for structure that nothing user-facing describes (for example the masked `.pricebar`).
+- Avoid long XPath chains and absolute paths such as `div > div > div:nth-child(3)`; they break
+  when the layout changes. `tools/check_rules.py` fails on XPath, positional selectors,
+  3+ level child chains and manual sleeps.
+- Locators are lazy and auto-wait: do not add `time.sleep` or `wait_for_timeout`. Save a locator
+  as a property or variable and reuse it (see `LoginPage.login_button`).
+- Keep every locator in `pages/`, never in step files.

@@ -1,4 +1,5 @@
-"""Fail on selectors, URLs or raw HTTP in step files, duplicate step text, untagged features.
+"""Fail on selectors, URLs or raw HTTP in step files, fragile locators and sleeps, duplicate step
+text and untagged features.
 
 Usage: python tools/check_rules.py [root]   (root defaults to the repository root)
 """
@@ -21,6 +22,13 @@ FORBIDDEN = {
         r"|\brequests\.(get|post|put|patch|delete|request|Session)\b"
         r"|\bhttpx\.|\burllib\.|\bhttp\.client\b|\bsession\.(get|post)\b"
     ),
+}
+# Fragile locator styles and manual waits, banned in pages/, core/browser/ and steps/
+FRAGILE = {
+    "XPath locator": re.compile(r"xpath|[\"'](//|\(//)"),
+    "positional selector": re.compile(r":nth-(child|of-type)|:first-child|:last-child"),
+    "long child-combinator chain": re.compile(r">\s*[\w.#\[\]=\"'-]+\s*>\s*[\w.#\[\]=\"'-]+\s*>"),
+    "manual sleep": re.compile(r"\btime\.sleep\(|\bwait_for_timeout\("),
 }
 SUITE_TAGS = {"@ui", "@api", "@visual", "@accessibility"}
 
@@ -72,6 +80,20 @@ def check_steps(root: Path) -> list[str]:
     return errors
 
 
+def check_locators(root: Path) -> list[str]:
+    """No XPath, positional/long CSS chains or manual sleeps in pages, browser core and steps."""
+    errors = []
+    for folder in ("pages", "core/browser", "steps"):
+        for path in sorted((root / folder).rglob("*.py")):
+            rel = path.relative_to(root)
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                code = line.split("#", 1)[0]
+                for label, pattern in FRAGILE.items():
+                    if pattern.search(code):
+                        errors.append(f"{rel}:{lineno}: {label}: {line.strip()}")
+    return errors
+
+
 def check_features(root: Path) -> list[str]:
     errors = []
     for path in sorted((root / "features").rglob("*.feature")):
@@ -86,7 +108,7 @@ def check_features(root: Path) -> list[str]:
 
 def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path(__file__).resolve().parent.parent
-    errors = check_steps(root) + check_features(root)
+    errors = check_steps(root) + check_locators(root) + check_features(root)
     for error in errors:
         print(error)
     print(f"check_rules: {'FAILED' if errors else 'ok'} ({len(errors)} problem(s))")
