@@ -31,6 +31,8 @@ Baseline/Actual/Diff images are attached.
 | `LOG_RETENTION_DAYS` | `7` | `logs/application-*.log` files not modified for more days are deleted at start (`0` keeps all) |
 | `TRACE_MODE` | `retain-on-failure` | Playwright trace: `off`, `on` or `retain-on-failure` |
 | `VIDEO_MODE` | `retain-on-failure` | Playwright video: `off`, `on` or `retain-on-failure` |
+| `ALLURE_AUTO_OPEN` | `true` | build `reports/allure-report` and open it in the browser when a run ends (needs the Allure CLI on PATH; never when `CI` is set) |
+| `ALLURE_THEME` | `dark` | report theme `dark` or `light`; a theme the viewer picked in the browser wins |
 
 One log file per day, `logs/application-YYYY-MM-DD.log`, is shared by ui, api and visual
 (and by parallel workers; lines carry the process id). Traces and videos are written to

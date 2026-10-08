@@ -28,6 +28,7 @@ def _require(name: str) -> str:
 
 TRACE_MODES = ("off", "on", "retain-on-failure")
 VIDEO_MODES = ("off", "on", "retain-on-failure")
+ALLURE_THEMES = ("dark", "light")
 
 
 def _choice(name: str, default: str, allowed: tuple[str, ...]) -> str:
@@ -35,6 +36,16 @@ def _choice(name: str, default: str, allowed: tuple[str, ...]) -> str:
     if value not in allowed:
         raise MissingSettingError(f"{name}='{value}' is invalid; use one of {allowed}")
     return value
+
+
+def _bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    value = raw.strip().lower()
+    if value not in ("true", "false", "1", "0", "yes", "no"):
+        raise MissingSettingError(f"{name}='{raw}' must be true or false")
+    return value in ("true", "1", "yes")
 
 
 def _int(name: str, default: int) -> int:
@@ -53,6 +64,8 @@ class Settings:
     log_retention_days: int = 7  # 0 keeps logs forever
     trace_mode: str = "retain-on-failure"
     video_mode: str = "retain-on-failure"
+    allure_auto_open: bool = True  # generate and open the report after the run (never in CI)
+    allure_theme: str = "dark"
 
     @property
     def app_password(self) -> str:
@@ -78,4 +91,6 @@ def get_settings() -> Settings:
         log_retention_days=_int("LOG_RETENTION_DAYS", 7),
         trace_mode=_choice("TRACE_MODE", "retain-on-failure", TRACE_MODES),
         video_mode=_choice("VIDEO_MODE", "retain-on-failure", VIDEO_MODES),
+        allure_auto_open=_bool("ALLURE_AUTO_OPEN", True) and not os.getenv("CI"),
+        allure_theme=_choice("ALLURE_THEME", "dark", ALLURE_THEMES),
     )

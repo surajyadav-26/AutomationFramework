@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from core.reporting.allure_helpers import write_environment_properties
+from core.reporting.allure_report import generate_and_open
 from core.reporting.log_files import daily_log_path, purge_old_logs
 from core.settings import LOCALE, TIMEZONE, VIEWPORT, MissingSettingError, get_settings
 
@@ -72,3 +73,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
             "browser": _browser_name(config),
         },
     )
+    if settings.allure_auto_open and session.testscollected and not config.getoption("collectonly"):
+        message = generate_and_open(
+            Path(results_dir), Path(results_dir).parent / "allure-report", settings.allure_theme
+        )
+        print(f"\n{message}")
