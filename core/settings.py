@@ -29,6 +29,7 @@ def _require(name: str) -> str:
 TRACE_MODES = ("off", "on", "retain-on-failure")
 VIDEO_MODES = ("off", "on", "retain-on-failure")
 ALLURE_THEMES = ("dark", "light")
+API_MODES = ("live", "stub")
 IMPACTS = ("minor", "moderate", "serious", "critical")  # ascending severity
 
 
@@ -47,6 +48,17 @@ def _bool(name: str, default: bool) -> bool:
     if value not in ("true", "false", "1", "0", "yes", "no"):
         raise MissingSettingError(f"{name}='{raw}' must be true or false")
     return value in ("true", "1", "yes")
+
+
+def _float(name: str, default: float, minimum: float = 0.0) -> float:
+    raw = os.getenv(name, str(default)).strip()
+    try:
+        value = float(raw)
+    except ValueError:
+        raise MissingSettingError(f"{name}='{raw}' must be a number") from None
+    if value < minimum:
+        raise MissingSettingError(f"{name}={value} must be at least {minimum}")
+    return value
 
 
 def _int(name: str, default: int) -> int:
@@ -68,6 +80,10 @@ class Settings:
     allure_auto_open: bool = True  # generate and open the report after the run (never in CI)
     allure_theme: str = "dark"
     a11y_fail_impact: str = "serious"  # lowest impact that fails an accessibility test
+    api_timeout: float = 15.0  # seconds per API request
+    api_mode: str = "live"  # live: the real service; stub: in-process fake for offline runs
+    rerun_count: int = 1  # reruns of a test after an infrastructure error (0 disables)
+    rerun_delay: float = 1.0  # seconds between reruns
 
     @property
     def app_password(self) -> str:
@@ -96,4 +112,8 @@ def get_settings() -> Settings:
         allure_auto_open=_bool("ALLURE_AUTO_OPEN", True) and not os.getenv("CI"),
         allure_theme=_choice("ALLURE_THEME", "dark", ALLURE_THEMES),
         a11y_fail_impact=_choice("A11Y_FAIL_IMPACT", "serious", IMPACTS),
+        api_timeout=_float("API_TIMEOUT", 15.0, minimum=0.1),
+        api_mode=_choice("API_MODE", "live", API_MODES),
+        rerun_count=_int("RERUN_COUNT", 1),
+        rerun_delay=_float("RERUN_DELAY", 1.0),
     )

@@ -84,9 +84,21 @@ Baselines are stored per `baselines/<os>/<browser>/<WxH>/<name>.png`.
 
 CI first-time setup (remote, secrets, linux baselines): see [CI_SETUP.md](CI_SETUP.md).
 
+## Reliability settings (`.env`)
+| Key | Default | Meaning |
+|---|---|---|
+| `API_TIMEOUT` | `15` | seconds before an API request times out |
+| `API_MODE` | `live` | `live` = the real dummyjson; `stub` = in-process fake of the auth endpoint, no network (proves the test logic, not the real service) |
+| `RERUN_COUNT` | `1` | reruns after an infrastructure error; `0` disables. `--reruns N` on the command line wins |
+| `RERUN_DELAY` | `1` | seconds between reruns |
+
+Tests that were retried are listed in a "retried after infrastructure errors" section at the end of
+the run, so flaky infrastructure stays visible.
+
 ## Retries
-At most one rerun, only for infrastructure errors (Playwright timeouts, connection errors,
-`net::ERR_*`). Assertion failures are never retried.
+Reruns happen only for infrastructure errors (timeouts, connection errors, `net::ERR_*`); assertion
+failures are never retried. The count is `RERUN_COUNT` (default 1). The patterns live in `pytest.ini`
+and are checked by `tests_framework/test_rerun_filter.py`.
 
 ## Architecture
 `features -> steps -> pages/clients -> core`; see AGENTS.md. Enforced by `lint-imports`

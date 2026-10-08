@@ -22,6 +22,11 @@ def pytest_configure(config: pytest.Config) -> None:
     # one daily file shared by ui, api, visual and every xdist worker
     config.option.log_file = str(daily_log_path())
     config.option.log_file_mode = "a"
+    # explicit --reruns/--reruns-delay on the command line win over .env
+    if config.option.reruns is None:
+        config.option.reruns = settings.rerun_count
+    if config.option.reruns_delay is None:
+        config.option.reruns_delay = settings.rerun_delay
     # explicit --tracing/--video on the command line win over .env
     if config.getoption("tracing") == "off":
         config.option.tracing = settings.trace_mode
@@ -85,3 +90,12 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
             Path(results_dir), Path(results_dir).parent / "allure-report", settings.allure_theme
         )
         print(f"\n{message}")
+
+
+def pytest_terminal_summary(terminalreporter: pytest.TerminalReporter) -> None:
+    """List tests that were retried after an infrastructure error (they may be flaky)."""
+    retried = sorted({report.nodeid for report in terminalreporter.stats.get("rerun", [])})
+    if retried:
+        terminalreporter.section("retried after infrastructure errors")
+        for nodeid in retried:
+            terminalreporter.line(nodeid)
