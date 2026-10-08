@@ -1,6 +1,6 @@
 # Contributing
 
-1. Write or extend a `.feature` file under `features/<suite>/<area>/`. The first line tags the
+1. Write or extend a `.feature` file under `features/<suite>/`. The first line tags the
    suite (`@ui`, `@api` or `@visual`); add `@smoke` to quick checks.
 2. Reuse existing step wording from [VOCABULARY.md](VOCABULARY.md). Add new wording there too.
    Step text must be unique within a suite.

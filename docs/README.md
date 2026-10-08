@@ -5,10 +5,10 @@ Playwright, requests, Allure. No Docker anywhere.
 
 | Suite  | Target                                   | Feature                                        |
 |--------|------------------------------------------|------------------------------------------------|
-| UI     | https://www.saucedemo.com                | features/ui/auth/login.feature                 |
-| API    | https://dummyjson.com `POST /auth/login` | features/api/auth/user.feature                 |
-| Visual | https://www.saucedemo.com                | features/visual/auth/login_visual.feature      |
-| Accessibility | https://www.saucedemo.com         | features/accessibility/auth/login_accessibility.feature |
+| UI     | https://www.saucedemo.com                | features/ui/login.feature                 |
+| API    | https://dummyjson.com `POST /auth/login` | features/api/user.feature                 |
+| Visual | https://www.saucedemo.com                | features/visual/login_visual.feature      |
+| Accessibility | https://www.saucedemo.com         | features/accessibility/login_accessibility.feature |
 
 ## Setup
 ```
@@ -61,7 +61,7 @@ job stays on chromium.
 ## Allure suites
 The Suites tab groups tests by suite type. A full run shows `UI`, `API` and `Visual` at the top
 level. A `-m smoke` run shows one `Smoke` group with `UI`, `API` and `Visual` underneath.
-The next level is the area (the `steps/<suite>/<area>/` folder, e.g. `Auth`).
+The next level is the area (the `steps/<suite>/` folder, e.g. `Auth`).
 
 ## Visual baselines (no Docker, so rendering differs per OS)
 Baselines are stored per `baselines/<os>/<browser>/<WxH>/<name>.png`.

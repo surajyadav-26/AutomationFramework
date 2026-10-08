@@ -33,7 +33,8 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     smoke_run = "smoke" in expression and "not smoke" not in expression
     for item in items:
         markers = {m.name for m in item.iter_markers()}
-        area = item.path.parent.name.replace("_", " ").title()  # steps/<suite>/<area>/
+        # steps/<suite>/test_<name>_steps.py -> "<Name>"
+        area = item.path.stem.removeprefix("test_").removesuffix("_steps").replace("_", " ").title()
         browser = getattr(item, "callspec", None) and item.callspec.params.get("browser_name")
         if browser and len(config.getoption("browser") or []) > 1:
             area = f"{area} ({browser})"  # cross-browser run: one group per browser

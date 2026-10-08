@@ -2,13 +2,13 @@
 
 Wording per suite. Parameters are in `{braces}`. A step text may appear once per suite.
 
-## UI (steps/ui/auth/test_login_steps.py)
+## UI (steps/ui/test_login_steps.py)
 - Given I am on the login page
 - When I log in as the "{role}" user with a {valid|invalid} password
 - Then I see the products page
 - Then I see the login error "{message}"
 
-## API (steps/api/auth/test_user_steps.py)
+## API (steps/api/test_user_steps.py)
 - When I request a token with valid credentials
 - When I request a token with a wrong password
 - Then the response status is {status}
@@ -16,13 +16,13 @@ Wording per suite. Parameters are in `{braces}`. A step text may appear once per
 - Then the response contains an access token
 - Then the response message is "{message}"
 
-## Visual (steps/visual/auth/test_login_visual_steps.py)
+## Visual (steps/visual/test_login_visual_steps.py)
 - Given I am viewing the login page
 - When I sign in as the "{role}" user
 - Then the login page matches the baseline
 - Then the inventory page matches the baseline
 
-## Accessibility (steps/accessibility/auth/test_login_accessibility_steps.py)
+## Accessibility (steps/accessibility/test_login_accessibility_steps.py)
 - Given I am viewing the login page
 - When I sign in as the "{role}" user
 - Then the login page has no blocking accessibility violations

@@ -6,7 +6,7 @@ from pytest_bdd import given, parsers, scenarios, then, when
 
 from core.data.factories import random_password, username_for
 
-scenarios("ui/auth/login.feature")
+scenarios("ui/login.feature")
 
 
 @given("I am on the login page")
