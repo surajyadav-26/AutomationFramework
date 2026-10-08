@@ -130,6 +130,7 @@ def test_open_joins_base_url_and_path_once():
 def env(monkeypatch):
     monkeypatch.delenv("VISUAL_IGNORE_ANTIALIASING", raising=False)
     monkeypatch.setattr(settings_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(settings_module, "dotenv_values", lambda *args, **kwargs: {})
     monkeypatch.setenv("APP_URL", "https://app.example")
     monkeypatch.setenv("API_URL", "https://api.example")
     get_settings.cache_clear()

@@ -1,4 +1,9 @@
-"""Environment-driven settings: URLs from config/<TEST_ENV>.env, secrets from the env."""
+"""Environment-driven settings: URLs from config/<TEST_ENV>.env, secrets from the env.
+
+Precedence, highest first: real environment variables, .env.<TEST_ENV> (per-environment secrets),
+.env (shared local secrets), config/<TEST_ENV>.env (URLs). TEST_ENV itself is read from the real
+environment or from .env, and defaults to qa.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 VIEWPORT = {"width": 1280, "height": 720}
@@ -97,8 +102,10 @@ class Settings:
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    load_dotenv(ROOT / ".env")  # local secrets; never overrides real environment variables
-    env = os.getenv("TEST_ENV", "qa")
+    env = os.getenv("TEST_ENV") or dotenv_values(ROOT / ".env").get("TEST_ENV") or "qa"
+    # none of these override variables that are already set, so the first one loaded wins
+    load_dotenv(ROOT / f".env.{env}")  # secrets that differ per environment (gitignored)
+    load_dotenv(ROOT / ".env")  # shared local secrets (gitignored)
     env_file = ROOT / "config" / f"{env}.env"
     if not env_file.exists():
         raise MissingSettingError(f"unknown TEST_ENV '{env}': {env_file} not found")

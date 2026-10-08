@@ -13,6 +13,7 @@ def clean_env(monkeypatch):
     for key in KEYS:
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setattr(settings_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(settings_module, "dotenv_values", lambda *args, **kwargs: {})
     monkeypatch.setenv("APP_URL", "https://app.example")
     monkeypatch.setenv("API_URL", "https://api.example")
     get_settings.cache_clear()

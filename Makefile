@@ -1,7 +1,7 @@
 PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest -q --tb=short
 
-.PHONY: install check api ui smoke visual accessibility cross-browser test-framework update-baselines parallel report serve
+.PHONY: install check api ui smoke visual accessibility cross-browser test-framework audit install-dev update-baselines parallel report serve
 
 install:
 	$(PYTHON) -m pip install -r requirements.lock
@@ -11,6 +11,7 @@ check:
 	$(PYTHON) -m ruff check .
 	$(PYTHON) -m ruff format --check .
 	lint-imports
+	$(PYTHON) -m mypy
 	$(PYTHON) tools/check_rules.py
 
 api:
@@ -34,7 +35,16 @@ cross-browser:
 
 # self-tests for core/ and tools/ (offline, about a second, separate pytest config)
 test-framework:
-	$(PYTHON) -m pytest -c tests_framework/pytest.ini tests_framework -q --tb=short
+	$(PYTHON) -m pytest -c tests_framework/pytest.ini tests_framework -q --tb=short --cov --cov-fail-under=95 --cov-report=term-missing:skip-covered
+
+# dependency vulnerability scan (needs network)
+audit:
+	$(PYTHON) -m pip_audit -r requirements.lock -r requirements-quality.lock --no-deps --disable-pip
+
+# runtime plus quality tools (mypy, pip-audit, coverage), for working on the framework itself
+install-dev:
+	$(PYTHON) -m pip install -r requirements.lock -r requirements-quality.lock
+	$(PYTHON) -m playwright install --with-deps chromium firefox webkit
 
 update-baselines:
 	$(PYTEST) steps/visual --update-baselines

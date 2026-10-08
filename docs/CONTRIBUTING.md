@@ -11,7 +11,8 @@
 5. No hardcoded passwords. Use `settings.app_password` / `settings.api_password` and
    `core.data.factories.random_password()` for deliberately wrong ones.
 6. Never skip, xfail or delete a failing test to pass a gate; fix the root cause.
-7. Before pushing: `make check` and the suite you touched. Optional: `pre-commit install`.
+7. Before pushing: `make check` (ruff, import rules, mypy, rules checker), `make test-framework` if you
+   touched `core/` or `tools/`, and the suite you touched. New code gets type hints. Optional: `pre-commit install`.
 8. Visual changes: do not commit windows/macos baselines. Run the *update-baselines*
    workflow and review the images in the resulting pull request.
 9. Do not hand-edit `reports/`, `baselines/` or `requirements.lock` (regenerate the lock with

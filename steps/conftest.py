@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -36,11 +37,19 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         markers = {m.name for m in item.iter_markers()}
         # steps/<suite>/test_<name>_steps.py -> "<Name>"
         area = item.path.stem.removeprefix("test_").removesuffix("_steps").replace("_", " ").title()
-        browser = getattr(item, "callspec", None) and item.callspec.params.get("browser_name")
+        callspec = getattr(item, "callspec", None)
+        browser = callspec.params.get("browser_name") if callspec else None
         if browser and len(config.getoption("browser") or []) > 1:
             area = f"{area} ({browser})"  # cross-browser run: one group per browser
         for mark in suite_marks(markers, area, smoke_run):
             item.add_marker(mark)
+
+
+def _fixture(item: pytest.Item, name: str) -> Any:
+    """Value of a fixture for a running test (pytest-bdd resolves fixtures dynamically)."""
+    if not isinstance(item, pytest.Function):
+        raise LookupError(f"{item.nodeid} is not a test function")
+    return item._request.getfixturevalue(name)
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -49,11 +58,10 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     report = outcome.get_result()
     if report.when != "call" or not report.failed:
         return
-    if not (item.get_closest_marker("ui") or item.get_closest_marker("visual")):
+    if not any(item.get_closest_marker(m) for m in ("ui", "visual", "accessibility")):
         return
     try:
-        # pytest-bdd resolves fixtures dynamically, so `page` is not in item.funcargs.
-        page = item._request.getfixturevalue("page")
+        page = _fixture(item, "page")
         attach_png(page.screenshot(full_page=True), "Failure screenshot")
     except Exception:
         log.exception("could not capture failure screenshot")
@@ -75,7 +83,7 @@ def pytest_runtest_teardown(item: pytest.Item):
         or item.get_closest_marker("accessibility")
     ):
         try:  # pytest-playwright's per-test output folder; the fixture is still alive here
-            folder = Path(item._request.getfixturevalue("output_path"))
+            folder = Path(_fixture(item, "output_path"))
         except Exception:
             log.exception("could not find the Playwright output folder")
     yield

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import platform
+from collections.abc import Mapping
 from pathlib import Path
 
 from core.settings import ROOT
@@ -18,7 +19,7 @@ def os_name() -> str:
     return _OS_NAMES[system]
 
 
-def baseline_path(name: str, browser: str, viewport: dict[str, int]) -> Path:
+def baseline_path(name: str, browser: str, viewport: Mapping[str, object]) -> Path:
     size = f"{viewport['width']}x{viewport['height']}"
     return BASELINE_DIR / os_name() / browser / size / f"{name}.png"
 

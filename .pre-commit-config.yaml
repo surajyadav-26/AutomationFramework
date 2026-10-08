@@ -17,6 +17,12 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
+      - id: mypy
+        name: mypy
+        entry: python -m mypy
+        language: system
+        pass_filenames: false
+        types: [python]
       - id: check-rules
         name: step and feature rules
         entry: python tools/check_rules.py

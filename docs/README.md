@@ -58,6 +58,24 @@ cross-browser run shows one group per browser, e.g. `UI / Auth (firefox)`.
 CI: the `cross-browser` job runs ui and accessibility on firefox and webkit; the regular `visual`
 job stays on chromium.
 
+## Quality gates
+| Gate | Command | What it checks |
+|---|---|---|
+| Lint and format | `ruff check .` / `ruff format --check .` | style and common bugs |
+| Architecture | `lint-imports`, `python tools/check_rules.py` | layering, no selectors/URLs/HTTP in steps, locator rules |
+| Static typing | `mypy` (config in `pyproject.toml`) | type errors in `core`, `pages`, `clients`, `tools`, `steps` |
+| Framework self-tests | `make test-framework` | behaviour of `core/` and `tools/`, with a **95% coverage** floor |
+| Dependency scan | `make audit` (`pip-audit`) | known vulnerabilities in the pinned packages |
+
+`make check` runs the first three; the CI `lint` job runs all of them. Tool pins live in
+`requirements-quality.lock` (kept apart from `requirements.lock` so test jobs install less). To work on
+the framework itself: `make install-dev`. Using a virtualenv is recommended; a clean one built from the
+two lock files passes every gate.
+
+### Per-environment secrets
+Precedence, highest first: real environment variables, `.env.<TEST_ENV>` (for example `.env.stage`),
+`.env`, then the URLs in `config/<TEST_ENV>.env`. All `.env*` files except `.env.example` are gitignored.
+
 ## Framework self-tests
 `tests_framework/` tests the framework itself (visual comparator, masking, baseline paths, settings
 parsing, log retention, cleanup, schema validation, HTTP client, Allure helpers and
