@@ -15,12 +15,15 @@ class LoginPage(BasePage):
         return self.page.get_by_role("button", name="Login", exact=True)
 
     def login(self, username: str, password: str) -> None:
+        self.log.info("log in as %r (password not logged)", username)
         self.page.get_by_label("Username", exact=True).fill(username)
         self.page.get_by_label("Password", exact=True).fill(password)
         self.login_button.click()
 
     def expect_error(self, message: str) -> None:
+        self.log.info("expect error %r", message)
         expect(self.by_test("error")).to_have_text(message)
 
     def expect_loaded(self) -> None:
+        self.log.info("expect login page loaded")
         expect(self.login_button).to_be_visible()

@@ -21,6 +21,10 @@ def attach_json(data: object, name: str) -> None:
     )
 
 
+def attach_file(path: Path, name: str, mime_type: str, extension: str) -> None:
+    allure.attach.file(str(path), name=name, attachment_type=mime_type, extension=extension)
+
+
 def attach_text(text: str, name: str) -> None:
     allure.attach(text, name=name, attachment_type=AttachmentType.TEXT)
 

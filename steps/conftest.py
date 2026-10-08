@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 import pytest
 
 from core.data.cleanup import Cleanup
-from core.reporting.allure_helpers import attach_png, suite_marks
+from core.reporting.allure_helpers import attach_file, attach_png, suite_marks
 from core.settings import Settings, get_settings
 
 log = logging.getLogger("hooks")
@@ -56,3 +57,30 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
         attach_png(page.screenshot(full_page=True), "Failure screenshot")
     except Exception:
         log.exception("could not capture failure screenshot")
+
+
+ARTIFACTS = (
+    ("trace.zip", "Playwright trace (python -m playwright show-trace <file>)", "application/zip"),
+    ("video.webm", "Playwright video", "video/webm"),
+)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item: pytest.Item):
+    """Attach the Playwright trace and video (kept per TRACE_MODE / VIDEO_MODE) to the report."""
+    folder = None
+    if (
+        item.get_closest_marker("ui")
+        or item.get_closest_marker("visual")
+        or item.get_closest_marker("accessibility")
+    ):
+        try:  # pytest-playwright's per-test output folder; the fixture is still alive here
+            folder = Path(item._request.getfixturevalue("output_path"))
+        except Exception:
+            log.exception("could not find the Playwright output folder")
+    yield
+    if folder is None:
+        return
+    for file_name, title, mime_type in ARTIFACTS:
+        if (folder / file_name).exists():
+            attach_file(folder / file_name, title, mime_type, file_name.rsplit(".", 1)[1])

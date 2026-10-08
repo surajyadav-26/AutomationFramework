@@ -216,3 +216,82 @@ jobs:
           name: allure-results-cross-browser-${{ matrix.browser }}
           path: reports/allure-results
           if-no-files-found: ignore
+
+  report:
+    # Merges the results of every test job, keeps run history for trend graphs, publishes the report.
+    if: always()
+    needs: [api, ui-smoke, ui-full, visual, accessibility, cross-browser]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: allure-results-*
+          merge-multiple: true
+          path: reports/allure-results
+      - name: Check there is something to report
+        id: has_results
+        run: |
+          if ls reports/allure-results/*-result.json >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Allure results were produced (earlier jobs failed or were skipped)."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.has_results.outputs.found == 'true'
+        with:
+          python-version: "3.12"
+      - name: Job summary
+        if: steps.has_results.outputs.found == 'true'
+        run: python tools/ci_summary.py reports/allure-results >> "$GITHUB_STEP_SUMMARY"
+      - name: Restore report history
+        if: steps.has_results.outputs.found == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: allure-history
+          key: allure-history-${{ github.run_id }}
+          restore-keys: allure-history-
+      - name: Build the Allure report (with history)
+        if: steps.has_results.outputs.found == 'true'
+        run: |
+          npm install -g allure-commandline
+          if [ -d allure-history ]; then
+            mkdir -p reports/allure-results/history
+            cp -r allure-history/. reports/allure-results/history/
+          fi
+          allure generate reports/allure-results -o reports/allure-report --clean
+          python -c "from pathlib import Path; from core.reporting.allure_report import apply_theme; apply_theme(Path('reports/allure-report'), 'dark')"
+          rm -rf allure-history
+          cp -r reports/allure-report/history allure-history
+      - name: Save report history
+        if: steps.has_results.outputs.found == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: allure-history
+          key: allure-history-${{ github.run_id }}
+      - name: Keep the report as an artifact
+        if: steps.has_results.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: reports/allure-report
+      - name: Publish to GitHub Pages (main only)
+        continue-on-error: true  # the repo setting Pages > Source > GitHub Actions may not be on yet
+        if: steps.has_results.outputs.found == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/allure-report
+      - name: Deploy to GitHub Pages
+        id: deploy
+        continue-on-error: true
+        if: steps.has_results.outputs.found == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/deploy-pages@v4

@@ -29,6 +29,12 @@ Settings → Actions → General → Workflow permissions → tick
 3. Review every image by eye, then merge. Until this is merged, the `visual` job in `ci.yml` fails
    with "no baseline for ..." by design.
 
+## 4b. Publish the Allure report with history (optional)
+Settings -> Pages -> Build and deployment -> Source: **GitHub Actions**. The `report` job then publishes
+the report of every `main` run (with trend graphs) at `https://<owner>.github.io/<repo>/`. Without this
+setting the publish steps are skipped without failing the run; the report is still available as the
+`allure-report` artifact of each run.
+
 ## 5. First green run
 Open a pull request or push to `main`. Expected job order:
 `lint` (ruff, import rules, check_rules, framework self-tests) → `api` → `ui-smoke` → `ui-full`

@@ -66,6 +66,16 @@ they never touch Allure results or logs of a normal run:
 `python -m pytest -c tests_framework/pytest.ini tests_framework` (or `make test-framework`).
 The CI `lint` job runs them. Run them after changing anything in `core/` or `tools/`.
 
+## Reporting extras
+- Every failing browser test attaches its **Playwright trace** (`trace.zip`) and **video** to the Allure
+  result, kept according to `TRACE_MODE` / `VIDEO_MODE`. Download the zip and run
+  `python -m playwright show-trace <trace.zip>`.
+- Page objects log their actions (open, log in, expect ...) to `logs/application-YYYY-MM-DD.log`;
+  passwords are never logged.
+- CI `report` job: merges the Allure results of all jobs, keeps run history (trend graphs) in the
+  Actions cache, uploads the report as the `allure-report` artifact and, on `main`, publishes it to
+  GitHub Pages. Each run also gets a results table in its job summary (`tools/ci_summary.py`).
+
 ## Allure suites
 The Suites tab groups tests by suite type. A full run shows `UI`, `API` and `Visual` at the top
 level. A `-m smoke` run shows one `Smoke` group with `UI`, `API` and `Visual` underneath.

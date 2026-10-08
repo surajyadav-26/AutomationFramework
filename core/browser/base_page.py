@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 
 from playwright.sync_api import Locator, Page, expect
@@ -22,19 +23,24 @@ class BasePage:
     def __init__(self, page: Page, base_url: str):
         self.page = page
         self.base_url = base_url.rstrip("/")
+        self.log = logging.getLogger(f"ui.{type(self).__name__}")
 
     def open(self) -> None:
-        self.page.goto(self.base_url + self.path)
+        url = self.base_url + self.path
+        self.log.info("open %s", url)
+        self.page.goto(url)
 
     def by_test(self, test_id: str) -> Locator:
         """Locator by test id; the attribute is configured as data-test in the root conftest."""
         return self.page.get_by_test_id(test_id)
 
     def expect_url_contains(self, fragment: str) -> None:
+        self.log.info("expect url contains %r", fragment)
         expect(self.page).to_have_url(re.compile(re.escape(fragment)))
 
     def screenshot(self, mask: list[Locator] | None = None) -> bytes:
         """Viewport PNG with animations disabled, caret hidden and optional masked areas."""
+        self.log.info("screenshot (%d masked area(s))", len(mask or []))
         self.page.add_style_tag(content=_STABILISE_CSS)
         self.page.wait_for_load_state("networkidle")
         return self.page.screenshot(animations="disabled", caret="hide", mask=mask or [])

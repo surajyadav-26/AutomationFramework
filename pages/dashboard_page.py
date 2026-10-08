@@ -14,6 +14,7 @@ class DashboardPage(BasePage):
     volatile_selectors = (".pricebar",)
 
     def expect_loaded(self) -> None:
+        self.log.info("expect products page loaded")
         self.expect_url_contains("/inventory.html")
         expect(self.by_test("title")).to_have_text("Products")
         expect(self.by_test("inventory-list")).to_be_visible()
