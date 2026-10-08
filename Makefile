@@ -1,7 +1,7 @@
 PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest -q --tb=short
 
-.PHONY: install check api ui smoke visual accessibility cross-browser test-framework audit doctor install-dev update-baselines parallel report serve
+.PHONY: install check api ui smoke visual accessibility cross-browser test-framework mutation audit doctor install-dev update-baselines parallel report serve
 
 install:
 	$(PYTHON) -m pip install -r requirements.lock
@@ -36,6 +36,10 @@ cross-browser:
 # self-tests for core/ and tools/ (offline, about a second, separate pytest config)
 test-framework:
 	$(PYTHON) -m pytest -c tests_framework/pytest.ini tests_framework -q --tb=short --cov --cov-fail-under=95 --cov-report=term-missing:skip-covered
+
+# break the framework code on purpose and check the self-tests notice (about 10 minutes)
+mutation:
+	$(PYTHON) tools/mutation_check.py
 
 # does this Python match requirements*.lock and .python-version?
 doctor:

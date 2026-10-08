@@ -1,0 +1,24 @@
+name: mutation
+# "Tests of the tests": breaks the framework code on purpose and checks the self-tests notice.
+# Takes about ten minutes, so it runs weekly and on demand instead of on every push.
+on:
+  schedule:
+    - cron: "0 3 * * 1"   # Mondays 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.lock -r requirements-quality.lock
+      - run: playwright install --with-deps chromium
+      - run: python tools/mutation_check.py

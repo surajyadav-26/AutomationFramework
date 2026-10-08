@@ -1,0 +1,130 @@
+"""Test the tests: break the framework code on purpose and check the self-tests notice.
+
+Each mutant is one small, deliberate bug (a flipped comparison, a disabled check...). For every mutant
+the self-tests run; if they still pass, the bug "survived" and a test is missing. The source file is
+always restored afterwards, even if the run is interrupted.
+
+Usage:
+    python tools/mutation_check.py              run all mutants (a few minutes)
+    python tools/mutation_check.py --list       list them
+    python tools/mutation_check.py comparator   only mutants whose label or file contains the text
+Exit code 1 if any mutant survives or no longer applies (stale after a refactor).
+"""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SELF_TEST_COMMAND = [
+    sys.executable, "-m", "pytest", "-c", "tests_framework/pytest.ini", "tests_framework",
+    "-q", "-x", "-n", "4", "-p", "no:cacheprovider",
+]  # fmt: skip
+
+
+@dataclass(frozen=True)
+class Mutant:
+    file: str
+    old: str
+    new: str
+    label: str
+
+
+@dataclass(frozen=True)
+class Result:
+    mutant: Mutant
+    status: str  # killed | survived | stale
+
+
+MUTANTS = [
+    Mutant("core/visual/comparator.py", "v > tolerance", "v > tolerance + 40", "comparator: tolerance too loose"),
+    Mutant("core/visual/comparator.py", "ok = ratio <= max_ratio", "ok = True", "comparator: everything matches"),
+    Mutant("core/visual/comparator.py", "changed = changed.filter(ImageFilter.MinFilter(3))", "pass", "comparator: anti-aliasing option does nothing"),
+    Mutant("core/visual/baseline_store.py", '"Darwin": "macos"', '"Darwin": "mac"', "baseline_store: wrong macOS folder"),
+    Mutant("core/reporting/log_files.py", "st_mtime < cutoff", "st_mtime > cutoff", "log retention: deletes the new files"),
+    Mutant("core/reporting/log_files.py", "if retention_days <= 0", "if retention_days < 0", "log retention: 0 no longer keeps everything"),
+    Mutant("core/data/cleanup.py", "self._callbacks.pop()", "self._callbacks.pop(0)", "cleanup: runs in the wrong order"),
+    Mutant("core/data/cleanup.py", "failures.append(description)", "pass", "cleanup: hides failing callbacks"),
+    Mutant("core/settings.py", ' and not os.getenv("CI")', "", "settings: report opens in CI"),
+    Mutant("core/settings.py", 'if not value.startswith(("http://", "https://")) or " " in value:', "if False:", "settings: URLs not validated"),
+    Mutant("core/settings.py", 'return value.rstrip("/")', "return value", "settings: trailing slash kept"),
+    Mutant("core/settings.py", 'load_dotenv(ROOT / f".env.{env}")', "pass", "settings: per-environment secrets ignored"),
+    Mutant("core/api/validator.py", "if errors:", "if False:", "validator: schema violations pass"),
+    Mutant("core/api/redaction.py", "SENSITIVE_KEY.search(key)", "None", "redaction: nothing is masked"),
+    Mutant("core/api/redaction.py", "|secret|token|authori", "|secret|authori", "redaction: tokens are not masked"),
+    Mutant("core/api/http_client.py", 'kwargs.setdefault("timeout", self.timeout)', "pass", "http client: no timeout"),
+    Mutant("core/api/stub_server.py", 'return self._send(400, {"message": "Invalid credentials"})', 'return self._send(200, {"message": "Invalid credentials"})', "stub server: bad login accepted"),
+    Mutant("core/accessibility/axe_scanner.py", '.index(v.get("impact") or "minor") >= threshold', '.index(v.get("impact") or "minor") > threshold', "axe: threshold impact not included"),
+    Mutant("core/browser/base_page.py", "visibility: hidden", "display: none", "base page: hiding changes the layout"),
+    Mutant("core/browser/base_page.py", 'self.page.evaluate("document.fonts.ready.then(() => true)")', "pass", "base page: does not wait for fonts"),
+    Mutant("steps/conftest.py", "if isinstance(mark, str | pytest.MarkDecorator):", "if False:", "steps conftest: suite grouping never applied"),
+    Mutant("tools/check_rules.py", '"URL": re.compile(r"https?://"),', '"URL": re.compile(r"NEVERMATCH"),', "check_rules: URLs allowed in steps"),
+    Mutant("tools/check_rules.py", 'if used and file_name[: -len(".png")] not in used:', "if False:", "check_rules: orphan baselines allowed"),
+    Mutant("tools/check_rules.py", "if SECRET_ASSIGNMENT.search(line):", "if False:", "check_rules: secret literals allowed"),
+    Mutant("tools/ci_summary.py", 'in ("failed", "broken")]', 'in ("failed",)]', "ci_summary: broken tests not listed"),
+    Mutant("tools/check_env.py", "elif have != wanted:", "elif False:", "check_env: version drift ignored"),
+    Mutant("pytest.ini", "--only-rerun=^(TimeoutError|ConnectTimeout|", "--only-rerun=^(TimeoutError|", "pytest.ini: connect timeouts not retried"),
+]  # fmt: skip
+
+
+def apply_mutant(root: Path, mutant: Mutant) -> bytes | None:
+    """Write the mutated file and return the original bytes, or None if the mutant is stale."""
+    path = root / mutant.file
+    original = path.read_bytes()
+    text = original.decode("utf-8")
+    if mutant.old not in text:
+        return None
+    path.write_bytes(text.replace(mutant.old, mutant.new, 1).encode("utf-8"))
+    return original
+
+
+def evaluate(root: Path, mutants: Iterable[Mutant], run_tests: Callable[[], bool]) -> list[Result]:
+    """run_tests() returns True when the self-tests pass. Files are restored in every case."""
+    if not run_tests():
+        raise RuntimeError("the self-tests fail even without a mutation; fix them first")
+    results = []
+    for mutant in mutants:
+        original = apply_mutant(root, mutant)
+        if original is None:
+            results.append(Result(mutant, "stale"))
+            continue
+        try:
+            passed = run_tests()
+        finally:
+            (root / mutant.file).write_bytes(original)
+        results.append(Result(mutant, "survived" if passed else "killed"))
+    return results
+
+
+def select(mutants: Iterable[Mutant], text: str | None) -> list[Mutant]:
+    if not text:
+        return list(mutants)
+    return [m for m in mutants if text in m.label or text in m.file]
+
+
+def default_runner() -> bool:  # pragma: no cover (starts the real self-tests)
+    return subprocess.run(SELF_TEST_COMMAND, cwd=ROOT, capture_output=True).returncode == 0
+
+
+def main(argv: list[str]) -> int:  # pragma: no cover (drives the real self-tests)
+    args = argv[1:]
+    chosen = select(MUTANTS, next((a for a in args if not a.startswith("--")), None))
+    if "--list" in args:
+        for mutant in chosen:
+            print(f"{mutant.file}: {mutant.label}")
+        return 0
+    print(f"running the self-tests once without changes, then {len(chosen)} mutants ...")
+    results = evaluate(ROOT, chosen, default_runner)
+    for result in results:
+        print(f"{result.status.upper():9} {result.mutant.label}  ({result.mutant.file})")
+    bad = [r for r in results if r.status != "killed"]
+    print(f"mutation_check: {len(results) - len(bad)} of {len(results)} killed")
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main(sys.argv))

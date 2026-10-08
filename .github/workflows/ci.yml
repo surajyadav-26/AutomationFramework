@@ -30,6 +30,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.lock -r requirements-quality.lock
+      - run: playwright install --with-deps chromium  # a few self-tests use a real browser on local HTML
       - run: python tools/check_env.py
       - run: ruff check .
       - run: ruff format --check .

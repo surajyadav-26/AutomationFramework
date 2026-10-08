@@ -20,3 +20,7 @@ source = ["core", "tools"]
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
+
+[tool.ruff.lint.per-file-ignores]
+# the mutant table is one line per mutant on purpose
+"tools/mutation_check.py" = ["E501"]

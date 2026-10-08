@@ -92,6 +92,7 @@ job stays on chromium.
 | Architecture | `lint-imports`, `python tools/check_rules.py` | layering, no selectors/URLs/HTTP in steps, locator rules |
 | Static typing | `mypy` (config in `pyproject.toml`) | type errors in `core`, `pages`, `clients`, `tools`, `steps` |
 | Framework self-tests | `make test-framework` | behaviour of `core/` and `tools/`, with a **95% coverage** floor |
+| Test the tests | `make mutation` (`tools/mutation_check.py`) | deliberately breaks the code in 27 places and fails if the self-tests do not notice; weekly in CI (`mutation.yml`), about 10 minutes |
 | Environment | `make doctor` (`tools/check_env.py`) | installed packages equal the lock files, Python matches `.python-version`, every direct dependency is pinned |
 | Dependency scan | `make audit` (`pip-audit`) | known vulnerabilities in the pinned packages |
 
@@ -122,7 +123,7 @@ Precedence, highest first: real environment variables, `.env.<TEST_ENV>` (for ex
 ## Framework self-tests
 `tests_framework/` tests the framework itself (visual comparator, masking, baseline paths, settings
 parsing, log retention, cleanup, schema validation, HTTP client, Allure helpers and
-`tools/check_rules.py`). They are offline, take about a second and have their own pytest config, so
+`tools/check_rules.py`). They run offline (a few use a real Chromium on local HTML), take about 25 seconds and have their own pytest config, so
 they never touch Allure results or logs of a normal run:
 `python -m pytest -c tests_framework/pytest.ini tests_framework` (or `make test-framework`).
 The CI `lint` job runs them. Run them after changing anything in `core/` or `tools/`.
@@ -163,6 +164,8 @@ CI first-time setup (remote, secrets, linux baselines): see [CI_SETUP.md](CI_SET
   solid box that follows the element size).
 - **Anti-aliasing:** `VISUAL_IGNORE_ANTIALIASING=true` ignores differences only 1-2 pixels wide. Off by
   default because it would also hide a real 1px change such as a border colour.
+- **Threshold in practice:** 0.1% of a 1280x720 screenshot is about 920 pixels, so a few changed words can
+  pass. For pages where small text matters, tighten it per test (below).
 - **Per test limit:** `assert_matches_baseline(name, page_object, max_ratio=...)` overrides the 0.1%.
 - `tools/check_rules.py` checks the baseline folder: layout `<os>/<browser>/<WxH>/<name>.png`, no orphan
   images that no step uses, and no committed windows/macos baselines.
