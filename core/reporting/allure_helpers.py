@@ -38,13 +38,23 @@ def write_environment_properties(results_dir: Path, properties: dict[str, str]) 
 SUITE_NAMES = {"ui": "UI", "api": "API", "visual": "Visual", "accessibility": "Accessibility"}
 
 
-def suite_marks(markers: set[str], area: str, smoke_run: bool) -> list:
-    """Marks that group a test in the Allure Suites tab.
+def suite_labels(markers: set[str], area: str, smoke_run: bool) -> list[tuple[str, str]]:
+    """(label type, value) pairs that group a test in the Allure Suites tab.
 
-    Full run:  <UI|API|Visual> / <area>
-    Smoke run: Smoke / <UI|API|Visual> / <area>
+    Full run:  <UI|API|Visual|Accessibility> / <area>
+    Smoke run: Smoke / <UI|API|Visual|Accessibility> / <area>
     """
     kind = next((SUITE_NAMES[m] for m in SUITE_NAMES if m in markers), "Other")
     if smoke_run:
-        return [allure.parent_suite("Smoke"), allure.suite(kind), allure.sub_suite(area)]
-    return [allure.parent_suite(kind), allure.suite(area)]
+        return [("parentSuite", "Smoke"), ("suite", kind), ("subSuite", area)]
+    return [("parentSuite", kind), ("suite", area)]
+
+
+def suite_marks(markers: set[str], area: str, smoke_run: bool) -> list:
+    """The pytest marks (allure decorators) for suite_labels."""
+    decorators = {
+        "parentSuite": allure.parent_suite,
+        "suite": allure.suite,
+        "subSuite": allure.sub_suite,
+    }
+    return [decorators[label](value) for label, value in suite_labels(markers, area, smoke_run)]

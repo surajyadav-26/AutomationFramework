@@ -58,6 +58,14 @@ cross-browser run shows one group per browser, e.g. `UI / Auth (firefox)`.
 CI: the `cross-browser` job runs ui and accessibility on firefox and webkit; the regular `visual`
 job stays on chromium.
 
+## Framework self-tests
+`tests_framework/` tests the framework itself (visual comparator, masking, baseline paths, settings
+parsing, log retention, cleanup, schema validation, HTTP client, Allure helpers and
+`tools/check_rules.py`). They are offline, take about a second and have their own pytest config, so
+they never touch Allure results or logs of a normal run:
+`python -m pytest -c tests_framework/pytest.ini tests_framework` (or `make test-framework`).
+The CI `lint` job runs them. Run them after changing anything in `core/` or `tools/`.
+
 ## Allure suites
 The Suites tab groups tests by suite type. A full run shows `UI`, `API` and `Visual` at the top
 level. A `-m smoke` run shows one `Smoke` group with `UI`, `API` and `Visual` underneath.
@@ -73,6 +81,8 @@ Baselines are stored per `baselines/<os>/<browser>/<WxH>/<name>.png`.
 - Comparison: Pillow pixel diff, per-pixel tolerance 10, max 0.1% of pixels differing,
   viewport 1280x720, UTC, en-US, animations disabled. Volatile areas are masked per page object
   (`volatile_selectors`).
+
+CI first-time setup (remote, secrets, linux baselines): see [CI_SETUP.md](CI_SETUP.md).
 
 ## Retries
 At most one rerun, only for infrastructure errors (Playwright timeouts, connection errors,

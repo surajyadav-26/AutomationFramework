@@ -22,6 +22,7 @@ checks against saucedemo.com and dummyjson.com. No Docker anywhere.
 - Never skip, xfail or delete a failing test to pass a gate. Fix the root cause.
 
 ## Commands
-`make install | check | api | ui | smoke | visual | accessibility | cross-browser | update-baselines | parallel | report | serve`
+`make install | check | api | ui | smoke | visual | accessibility | cross-browser | test-framework | update-baselines | parallel | report | serve`
 
+Framework code (core/, tools/) is covered by tests_framework/; run it after changing either.
 Never edit reports/ baselines/ *.lock by hand.

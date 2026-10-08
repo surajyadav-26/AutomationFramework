@@ -1,7 +1,7 @@
 PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest -q --tb=short
 
-.PHONY: install check api ui smoke visual accessibility cross-browser update-baselines parallel report serve
+.PHONY: install check api ui smoke visual accessibility cross-browser test-framework update-baselines parallel report serve
 
 install:
 	$(PYTHON) -m pip install -r requirements.lock
@@ -31,6 +31,10 @@ accessibility:
 # all browser-based suites on chromium, firefox and webkit (visual needs per-browser baselines)
 cross-browser:
 	$(PYTEST) steps/ui steps/accessibility steps/visual --browser chromium --browser firefox --browser webkit
+
+# self-tests for core/ and tools/ (offline, about a second, separate pytest config)
+test-framework:
+	$(PYTHON) -m pytest -c tests_framework/pytest.ini tests_framework -q --tb=short
 
 update-baselines:
 	$(PYTEST) steps/visual --update-baselines

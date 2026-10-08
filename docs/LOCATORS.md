@@ -49,19 +49,19 @@ navigation, tab, menuitem.
 
 Text matching:
 ```python
-page.get_by_text("Login")                   # substring, case-insensitive
-page.get_by_text("Login", exact=True)       # exact, case-sensitive
+page.get_by_text("Login")  # substring, case-insensitive
+page.get_by_text("Login", exact=True)  # exact, case-sensitive
 page.get_by_text(re.compile("^log", re.I))  # regular expression
 ```
 
 ## 3. Generic `locator()`: CSS (XPath is banned here)
 ```python
-page.locator("#username")                    # id
-page.locator(".inventory_item")              # class
-page.locator("input[type='password']")       # tag + attribute
-page.locator("a[href*='cart']")              # attribute contains
-page.locator("[data-test^='add-to-cart']")   # starts with
-page.locator("ul > li")                      # direct child
+page.locator("#username")  # id
+page.locator(".inventory_item")  # class
+page.locator("input[type='password']")  # tag + attribute
+page.locator("a[href*='cart']")  # attribute contains
+page.locator("[data-test^='add-to-cart']")  # starts with
+page.locator("ul > li")  # direct child
 ```
 Playwright-specific selectors: `button:has-text('Login')`, `button:text-is('Login')`,
 `div:has(h1)`, `li:visible`, `input:not([disabled])`.
@@ -81,23 +81,22 @@ Playwright-specific selectors: `button:has-text('Login')`, `button:text-is('Logi
 
 Click the button inside one specific product card:
 ```python
-page.get_by_test_id("inventory-item") \
-    .filter(has_text="Sauce Labs Backpack") \
-    .get_by_role("button", name="Add to cart") \
-    .click()
+page.get_by_test_id("inventory-item").filter(has_text="Sauce Labs Backpack").get_by_role(
+    "button", name="Add to cart"
+).click()
 ```
 
 ## 5. Frames, shadow DOM, focus
 ```python
 page.frame_locator("#payment-frame").get_by_label("Card number")  # iframe
 page.locator("my-element").locator("button")  # CSS pierces open shadow roots
-page.locator(":focus")                        # focused element
+page.locator(":focus")  # focused element
 ```
 
 ## 6. Several matches
 ```python
 items = page.get_by_test_id("inventory-item")
-items.count()             # number of matches
-items.all()               # list of locators
-items.all_inner_texts()   # list of texts
+items.count()  # number of matches
+items.all()  # list of locators
+items.all_inner_texts()  # list of texts
 ```
