@@ -30,4 +30,4 @@ the visual and accessibility suites. Parameters are in `{braces}`. A step text m
 - Then the login page has no blocking accessibility violations
 - Then the inventory page has no blocking accessibility violations
 
-Roles come from `test_data/users.json`: standard, locked_out, problem, visual, no_username, api.
+Roles come from `test_data/users.json`: standard, locked_out, visual, no_username, api.

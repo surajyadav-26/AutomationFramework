@@ -1,7 +1,6 @@
 {
   "standard": "standard_user",
   "locked_out": "locked_out_user",
-  "problem": "problem_user",
   "visual": "visual_user",
   "no_username": "",
   "api": "emilys"

@@ -6,7 +6,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from clients.auth.user_client import UserClient
+from clients.user_client import UserClient
 from core.api.http_client import HttpClient
 from core.api.stub_server import StubAuthServer
 from core.data.factories import username_for

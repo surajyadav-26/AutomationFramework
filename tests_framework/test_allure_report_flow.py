@@ -101,13 +101,12 @@ def fake_allure(monkeypatch):
     return calls
 
 
-def test_attach_png_json_text_and_file(fake_allure, tmp_path):
+def test_attach_png_json_and_file(fake_allure, tmp_path):
     allure_helpers.attach_png(b"png", "shot")
     allure_helpers.attach_json({"a": 1}, "body")
-    allure_helpers.attach_text("hello", "note")
     allure_helpers.attach_file(tmp_path / "t.zip", "trace", "application/zip", "zip")
     kinds = [call[0] for call in fake_allure]
-    assert kinds == ["attach", "attach", "attach", "file"]
+    assert kinds == ["attach", "attach", "file"]
     assert fake_allure[0][1:3] == (b"png", "shot")
     assert '"a": 1' in fake_allure[1][1]
-    assert fake_allure[3][3:] == ("application/zip", "zip")
+    assert fake_allure[2][3:] == ("application/zip", "zip")

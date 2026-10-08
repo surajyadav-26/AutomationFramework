@@ -1,5 +1,7 @@
 """Where settings come from: real env > .env.<TEST_ENV> > .env > config/<TEST_ENV>.env."""
 
+import os
+
 import pytest
 
 from core import settings as settings_module
@@ -24,8 +26,10 @@ def project(tmp_path, monkeypatch):
     get_settings.cache_clear()
     yield tmp_path
     get_settings.cache_clear()
-    for key in KEYS:  # load_dotenv writes into the real process environment
-        monkeypatch.delenv(key, raising=False)
+    # load_dotenv writes into the real process environment. Pop the keys directly: going through
+    # monkeypatch.delenv would make monkeypatch "restore" the values at its own teardown.
+    for key in KEYS:
+        os.environ.pop(key, None)
 
 
 def test_default_environment_is_qa(project):

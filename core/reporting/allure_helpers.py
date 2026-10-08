@@ -25,10 +25,6 @@ def attach_file(path: Path, name: str, mime_type: str, extension: str) -> None:
     allure.attach.file(str(path), name=name, attachment_type=mime_type, extension=extension)
 
 
-def attach_text(text: str, name: str) -> None:
-    allure.attach(text, name=name, attachment_type=AttachmentType.TEXT)
-
-
 def write_environment_properties(results_dir: Path, properties: dict[str, str]) -> Path:
     results_dir.mkdir(parents=True, exist_ok=True)
     base = {"python": platform.python_version(), "os": f"{platform.system()} {platform.release()}"}
