@@ -33,10 +33,11 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     report = outcome.get_result()
     if report.when != "call" or not report.failed:
         return
-    page = item.funcargs.get("page")
-    if page is None:
+    if not (item.get_closest_marker("ui") or item.get_closest_marker("visual")):
         return
     try:
+        # pytest-bdd resolves fixtures dynamically, so `page` is not in item.funcargs.
+        page = item._request.getfixturevalue("page")
         attach_png(page.screenshot(full_page=True), "Failure screenshot")
     except Exception:
         log.exception("could not capture failure screenshot")

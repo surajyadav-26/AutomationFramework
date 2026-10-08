@@ -1,0 +1,25 @@
+# Step vocabulary
+
+Wording per suite. Parameters are in `{braces}`. A step text may appear once per suite.
+
+## UI (steps/ui/auth/test_login_steps.py)
+- Given I am on the login page
+- When I log in as the "{role}" user with a {valid|invalid} password
+- Then I see the products page
+- Then I see the login error "{message}"
+
+## API (steps/api/auth/test_user_steps.py)
+- When I request a token with valid credentials
+- When I request a token with a wrong password
+- Then the response status is {status}
+- Then the response body matches the user schema
+- Then the response contains an access token
+- Then the response message is "{message}"
+
+## Visual (steps/visual/auth/test_login_visual_steps.py)
+- Given I am viewing the login page
+- When I sign in as the "{role}" user
+- Then the login page matches the baseline
+- Then the inventory page matches the baseline
+
+Roles come from `test_data/users.json`: standard, locked_out, problem, visual, no_username, api.
