@@ -1,4 +1,4 @@
-"""Environment-driven settings. URLs come from config/<TEST_ENV>.env, secrets from the environment."""
+"""Environment-driven settings: URLs from config/<TEST_ENV>.env, secrets from the env."""
 
 from __future__ import annotations
 
