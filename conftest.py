@@ -2,21 +2,32 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
 
 from core.reporting.allure_helpers import write_environment_properties
-from core.settings import LOCALE, TIMEZONE, VIEWPORT, get_settings
+from core.reporting.log_files import daily_log_path, purge_old_logs
+from core.settings import LOCALE, TIMEZONE, VIEWPORT, MissingSettingError, get_settings
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
-    """One log file per xdist worker so parallel workers do not overwrite each other."""
-    worker = os.environ.get("PYTEST_XDIST_WORKER")
-    if worker:
-        config.option.log_file = f"reports/logs/{worker}.log"
+    """Apply .env driven logging, trace and video settings."""
+    try:
+        settings = get_settings()
+    except MissingSettingError as error:
+        raise pytest.UsageError(str(error)) from None
+    # one daily file shared by ui, api, visual and every xdist worker
+    config.option.log_file = str(daily_log_path())
+    config.option.log_file_mode = "a"
+    # explicit --tracing/--video on the command line win over .env
+    if config.getoption("tracing") == "off":
+        config.option.tracing = settings.trace_mode
+    if config.getoption("video") == "off":
+        config.option.video = settings.video_mode
+    if not hasattr(config, "workerinput"):  # controller only
+        purge_old_logs(settings.log_retention_days)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
