@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from playwright.sync_api import Locator, Page, expect
 
 # Hides the text caret and stops CSS animations/transitions for stable screenshots.
@@ -28,7 +30,7 @@ class BasePage:
         return self.page.locator(f'[data-test="{test_id}"]')
 
     def expect_url_contains(self, fragment: str) -> None:
-        expect(self.page).to_have_url(f"**{fragment}*")
+        expect(self.page).to_have_url(re.compile(re.escape(fragment)))
 
     def screenshot(self, mask: list[Locator] | None = None) -> bytes:
         """Viewport PNG with animations disabled, caret hidden and optional masked areas."""
