@@ -8,3 +8,4 @@ reports/
 # local-only baselines; only linux (CI) baselines are the source of truth
 baselines/windows/
 baselines/macos/
+.import_linter_cache/
