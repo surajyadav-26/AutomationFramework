@@ -39,6 +39,11 @@ One log file per day, `logs/application-YYYY-MM-DD.log`, is shared by ui, api an
 `reports/playwright/`; open a trace with `python -m playwright show-trace <trace.zip>`.
 Passing `--tracing` / `--video` on the command line overrides `.env`.
 
+## Allure suites
+The Suites tab groups tests by suite type. A full run shows `UI`, `API` and `Visual` at the top
+level. A `-m smoke` run shows one `Smoke` group with `UI`, `API` and `Visual` underneath.
+The next level is the area (the `steps/<suite>/<area>/` folder, e.g. `Auth`).
+
 ## Visual baselines (no Docker, so rendering differs per OS)
 Baselines are stored per `baselines/<os>/<browser>/<WxH>/<name>.png`.
 - Only the **linux** baselines are committed; they come from the CI runner and are the source of truth.

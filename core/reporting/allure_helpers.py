@@ -33,3 +33,18 @@ def write_environment_properties(results_dir: Path, properties: dict[str, str]) 
     target = results_dir / "environment.properties"
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return target
+
+
+SUITE_NAMES = {"ui": "UI", "api": "API", "visual": "Visual"}
+
+
+def suite_marks(markers: set[str], area: str, smoke_run: bool) -> list:
+    """Marks that group a test in the Allure Suites tab.
+
+    Full run:  <UI|API|Visual> / <area>
+    Smoke run: Smoke / <UI|API|Visual> / <area>
+    """
+    kind = next((SUITE_NAMES[m] for m in SUITE_NAMES if m in markers), "Other")
+    if smoke_run:
+        return [allure.parent_suite("Smoke"), allure.suite(kind), allure.sub_suite(area)]
+    return [allure.parent_suite(kind), allure.suite(area)]

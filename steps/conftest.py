@@ -7,7 +7,7 @@ import logging
 import pytest
 
 from core.data.cleanup import Cleanup
-from core.reporting.allure_helpers import attach_png
+from core.reporting.allure_helpers import attach_png, suite_marks
 from core.settings import Settings, get_settings
 
 log = logging.getLogger("hooks")
@@ -25,6 +25,17 @@ def cleanup():
     yield registry
     failures = registry.run_all()
     assert not failures, f"cleanup callbacks failed: {failures}"
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Separate ui / api / visual in the report; a -m smoke run nests them under 'Smoke'."""
+    expression = config.getoption("markexpr") or ""
+    smoke_run = "smoke" in expression and "not smoke" not in expression
+    for item in items:
+        markers = {m.name for m in item.iter_markers()}
+        area = item.path.parent.name.replace("_", " ").title()  # steps/<suite>/<area>/
+        for mark in suite_marks(markers, area, smoke_run):
+            item.add_marker(mark)
 
 
 @pytest.hookimpl(hookwrapper=True)
