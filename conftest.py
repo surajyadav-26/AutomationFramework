@@ -52,6 +52,13 @@ def browser_context_args(browser_context_args: dict) -> dict:
     }
 
 
+@pytest.fixture(scope="session")
+def playwright(playwright):
+    """pytest-playwright's driver, with data-test as the test id attribute (get_by_test_id)."""
+    playwright.selectors.set_test_id_attribute("data-test")
+    return playwright
+
+
 def _browser_names(config: pytest.Config) -> str:
     return ", ".join(config.getoption("browser") or ["chromium"])
 

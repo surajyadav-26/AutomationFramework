@@ -27,7 +27,8 @@ class BasePage:
         self.page.goto(self.base_url + self.path)
 
     def by_test(self, test_id: str) -> Locator:
-        return self.page.locator(f'[data-test="{test_id}"]')
+        """Locator by test id; the attribute is configured as data-test in the root conftest."""
+        return self.page.get_by_test_id(test_id)
 
     def expect_url_contains(self, fragment: str) -> None:
         expect(self.page).to_have_url(re.compile(re.escape(fragment)))

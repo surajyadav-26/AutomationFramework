@@ -10,13 +10,17 @@ from core.browser.base_page import BasePage
 class LoginPage(BasePage):
     path = "/"
 
+    @property
+    def login_button(self):
+        return self.page.get_by_role("button", name="Login", exact=True)
+
     def login(self, username: str, password: str) -> None:
-        self.by_test("username").fill(username)
-        self.by_test("password").fill(password)
-        self.by_test("login-button").click()
+        self.page.get_by_label("Username", exact=True).fill(username)
+        self.page.get_by_label("Password", exact=True).fill(password)
+        self.login_button.click()
 
     def expect_error(self, message: str) -> None:
         expect(self.by_test("error")).to_have_text(message)
 
     def expect_loaded(self) -> None:
-        expect(self.by_test("login-button")).to_be_visible()
+        expect(self.login_button).to_be_visible()
