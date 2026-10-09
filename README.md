@@ -59,6 +59,7 @@ stops the run with a message naming the setting.
 | `A11Y_FAIL_IMPACT` | `serious` | lowest axe impact that fails an accessibility test: `minor`, `moderate`, `serious`, `critical` |
 | `A11Y_INCLUDE_BEST_PRACTICES` | `true` | also scan axe best-practice rules; they are reported and only fail a test if the impact threshold is set low |
 | `API_TIMEOUT` / `API_MODE` | `15` / `live` | request timeout in seconds; `live` = the real dummyjson, `stub` = in-process fake of the auth endpoint with no network (proves the test logic, not the real service) |
+| `ALLOW_PROD` | unset | must be `true` **in the shell or CI job** (not in a file) to run with `TEST_ENV=prod` or `production`; any other value refuses |
 | `RERUN_COUNT` / `RERUN_DELAY` | `1` / `1` | reruns after infrastructure errors only, and the pause in seconds (`--reruns N` on the command line wins) |
 | `VISUAL_IGNORE_ANTIALIASING` | `false` | ignore 1-2px wide visual differences |
 

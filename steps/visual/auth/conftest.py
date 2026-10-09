@@ -7,6 +7,7 @@ from collections.abc import Callable
 import pytest
 from playwright.sync_api import Page
 
+from core.areas import area_of
 from core.browser.base_page import BasePage
 from core.reporting.allure_helpers import attach_png
 from core.settings import ROOT, Settings
@@ -24,15 +25,17 @@ def assert_matches_baseline(
 ) -> Callable[..., None]:
     """Screenshot the current page and compare it with the stored baseline.
 
-    The baseline is keyed by OS, browser and the page's current viewport, so a phone-sized and a
-    desktop screenshot of the same page never share a file.
+    The baseline is keyed by OS, browser, the page's current viewport and the area (the folder this
+    step module lives in), so a phone-sized and a desktop screenshot, or two features, never share a
+    file.
     """
+    area = area_of(request.node.path) or ""
     update = request.config.getoption("--update-baselines")
 
     def check(name: str, page_object: BasePage, max_ratio: float = MAX_DIFF_RATIO) -> None:
         viewport = page.viewport_size or {"width": 0, "height": 0}
         size = f"{viewport['width']}x{viewport['height']}"
-        path = baseline_store.baseline_path(name, browser_name, viewport)
+        path = baseline_store.baseline_path(name, browser_name, viewport, area)
         actual = page_object.screenshot(
             mask=locators_for(page, getattr(page_object, "masked_selectors", ())),
             hide=getattr(page_object, "hidden_selectors", ()),
@@ -59,7 +62,7 @@ def assert_matches_baseline(
         attach_png(baseline, "Baseline")
         attach_png(actual, "Actual")
         DIFF_DIR.mkdir(parents=True, exist_ok=True)
-        stem = f"{name}-{browser_name}-{size}"
+        stem = f"{area}-{name}-{browser_name}-{size}".lstrip("-")
         (DIFF_DIR / f"{stem}-actual.png").write_bytes(actual)
         if result.diff_image:
             attach_png(result.diff_image, "Diff")

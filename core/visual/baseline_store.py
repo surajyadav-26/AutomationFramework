@@ -1,4 +1,4 @@
-"""Resolves baseline paths: baselines/<os>/<browser>/<WxH>/<name>.png."""
+"""Resolves baseline paths: baselines/<os>/<browser>/<WxH>/<area>/<name>.png."""
 
 from __future__ import annotations
 
@@ -19,9 +19,10 @@ def os_name() -> str:
     return _OS_NAMES[system]
 
 
-def baseline_path(name: str, browser: str, viewport: Mapping[str, object]) -> Path:
+def baseline_path(name: str, browser: str, viewport: Mapping[str, object], area: str = "") -> Path:
+    """The area (auth, cart, ...) keeps the images of different features apart."""
     size = f"{viewport['width']}x{viewport['height']}"
-    return BASELINE_DIR / os_name() / browser / size / f"{name}.png"
+    return BASELINE_DIR / os_name() / browser / size / area / f"{name}.png"
 
 
 def save(path: Path, data: bytes) -> None:

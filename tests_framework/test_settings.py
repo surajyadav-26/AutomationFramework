@@ -30,6 +30,7 @@ KEYS = [
     "RERUN_COUNT",
     "RERUN_DELAY",
     "ATTACH_TRACE_AND_VIDEO",
+    "ALLOW_PROD",
     "VISUAL_IGNORE_ANTIALIASING",
     "CI",
 ]
@@ -137,6 +138,48 @@ ROOT = Path(__file__).resolve().parent.parent
 def env(monkeypatch):
     """The monkeypatch that the autouse fixture above has already set up."""
     return monkeypatch
+
+
+# --- production guard ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", ["prod", "production"])
+def test_production_is_refused_unless_confirmed(monkeypatch, name):
+    monkeypatch.setenv("TEST_ENV", name)
+    with pytest.raises(MissingSettingError, match=f"refusing to run against '{name}'"):
+        get_settings()
+
+
+@pytest.mark.parametrize("confirmation", ["true", "1", "yes"])
+def test_the_confirmation_lets_the_guard_pass(monkeypatch, confirmation):
+    monkeypatch.setenv("TEST_ENV", "prod")
+    monkeypatch.setenv("ALLOW_PROD", confirmation)
+    # there is no config/prod.env in this repository, so the next check is what answers
+    with pytest.raises(MissingSettingError, match="unknown TEST_ENV 'prod'"):
+        get_settings()
+
+
+def test_a_false_or_garbage_confirmation_does_not_unlock_production(monkeypatch):
+    monkeypatch.setenv("TEST_ENV", "prod")
+    monkeypatch.setenv("ALLOW_PROD", "false")
+    with pytest.raises(MissingSettingError, match="refusing"):
+        get_settings()
+    monkeypatch.setenv("ALLOW_PROD", "maybe")
+    with pytest.raises(MissingSettingError, match="ALLOW_PROD"):
+        get_settings()
+
+
+@pytest.mark.parametrize("name", ["uat", "stage", "dev"])
+def test_other_environments_are_never_asked_for_confirmation(monkeypatch, name):
+    monkeypatch.setenv("TEST_ENV", name)
+    with pytest.raises(MissingSettingError, match=f"unknown TEST_ENV '{name}'") as caught:
+        get_settings()
+    assert "refusing" not in str(caught.value)
+
+
+def test_qa_needs_no_confirmation(monkeypatch):
+    monkeypatch.setenv("TEST_ENV", "qa")
+    assert get_settings().env == "qa"
 
 
 # --- reliability settings ------------------------------------------------------------

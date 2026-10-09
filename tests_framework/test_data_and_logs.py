@@ -1,11 +1,14 @@
 """Test data helpers (cleanup registry, factories) and the daily log files."""
 
+import json
 import os
 import time
 from datetime import date
+from types import SimpleNamespace
 
 import pytest
 
+from core.data import factories
 from core.data.cleanup import Cleanup
 from core.data.factories import random_password, unique, username_for
 from core.reporting.log_files import daily_log_path, purge_old_logs
@@ -101,3 +104,40 @@ def test_zero_or_negative_retention_keeps_everything(tmp_path):
 
 def test_missing_folder_is_not_an_error(tmp_path):
     assert purge_old_logs(7, tmp_path / "nope") == []
+
+
+# --- users per environment ---------------------------------------------------------------------
+
+
+@pytest.fixture
+def user_files(tmp_path, monkeypatch):
+    (tmp_path / "users.json").write_text(json.dumps({"admin": "admin_user", "guest": "guest_user"}))
+    environment = SimpleNamespace(env="qa")
+    monkeypatch.setattr(factories, "TEST_DATA", tmp_path)
+    monkeypatch.setattr(factories, "get_settings", lambda: environment)
+    factories._users.cache_clear()
+    yield SimpleNamespace(folder=tmp_path, environment=environment)
+    factories._users.cache_clear()
+
+
+def test_the_shared_users_file_is_used_when_the_environment_has_no_file(user_files):
+    assert factories.username_for("admin") == "admin_user"
+
+
+def test_an_environment_file_replaces_only_the_roles_it_lists(user_files):
+    (user_files.folder / "users.uat.json").write_text(json.dumps({"admin": "uat_admin"}))
+    user_files.environment.env = "uat"
+    assert factories.username_for("admin") == "uat_admin"
+    assert factories.username_for("guest") == "guest_user"
+
+
+def test_another_environments_file_is_ignored(user_files):
+    (user_files.folder / "users.uat.json").write_text(json.dumps({"admin": "uat_admin"}))
+    assert factories.username_for("admin") == "admin_user"  # the environment is qa
+
+
+def test_an_environment_file_can_add_roles(user_files):
+    (user_files.folder / "users.qa.json").write_text(json.dumps({"auditor": "qa_auditor"}))
+    assert factories.username_for("auditor") == "qa_auditor"
+    with pytest.raises(KeyError, match="known: \['admin', 'auditor', 'guest'\]"):
+        factories.username_for("nobody")

@@ -7,7 +7,9 @@ import pytest
 from core import settings as settings_module
 from core.settings import MissingSettingError, get_settings
 
-KEYS = ["TEST_ENV", "APP_URL", "API_URL", "APP_PASSWORD", "API_PASSWORD", "TRACE_MODE"]
+KEYS = [
+    "TEST_ENV", "APP_URL", "API_URL", "APP_PASSWORD", "API_PASSWORD", "TRACE_MODE", "ALLOW_PROD",
+]  # fmt: skip
 
 
 @pytest.fixture
@@ -81,6 +83,18 @@ def test_urls_in_config_do_not_beat_secrets_files(project):
 
 
 def test_unknown_environment_is_still_rejected(project):
-    (project / ".env").write_text("TEST_ENV=prod\n")
-    with pytest.raises(MissingSettingError, match="unknown TEST_ENV 'prod'"):
+    (project / ".env").write_text("TEST_ENV=nowhere\n")
+    with pytest.raises(MissingSettingError, match="unknown TEST_ENV 'nowhere'"):
         get_settings()
+
+
+def test_a_file_cannot_confirm_production_only_the_real_environment_can(project, monkeypatch):
+    prod_urls = "APP_URL=https://prod.example\nAPI_URL=https://api-prod\n"
+    (project / "config" / "prod.env").write_text(prod_urls)
+    (project / ".env").write_text("TEST_ENV=prod\nALLOW_PROD=true\n")
+    with pytest.raises(MissingSettingError, match="refusing to run against 'prod'"):
+        get_settings()
+    get_settings.cache_clear()
+    os.environ.pop("ALLOW_PROD", None)
+    monkeypatch.setenv("ALLOW_PROD", "true")  # now it is in the real environment
+    assert get_settings().app_url == "https://prod.example"

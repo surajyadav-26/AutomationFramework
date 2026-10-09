@@ -36,6 +36,7 @@ TRACE_MODES = ("off", "on", "retain-on-failure")
 VIDEO_MODES = ("off", "on", "retain-on-failure")
 ALLURE_THEMES = ("dark", "light")
 API_MODES = ("live", "stub")
+PROTECTED_ENVS = ("prod", "production")  # need ALLOW_PROD=true in the real environment
 IMPACTS = ("minor", "moderate", "serious", "critical")  # ascending severity
 
 
@@ -115,6 +116,14 @@ class Settings:
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     env = os.getenv("TEST_ENV") or dotenv_values(ROOT / ".env").get("TEST_ENV") or "qa"
+    # Read before any .env file is loaded: the confirmation must come from the real environment
+    # (the shell or the CI job), so a file cannot make every future run hit production.
+    allow_prod = _bool("ALLOW_PROD", False)
+    if env in PROTECTED_ENVS and not allow_prod:
+        raise MissingSettingError(
+            f"refusing to run against '{env}', a real environment. "
+            "Set ALLOW_PROD=true in the shell for this run to confirm."
+        )
     # none of these override variables that are already set, so the first one loaded wins
     load_dotenv(ROOT / f".env.{env}")  # secrets that differ per environment (gitignored)
     load_dotenv(ROOT / ".env")  # shared local secrets (gitignored)
