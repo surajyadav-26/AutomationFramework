@@ -1,22 +1,31 @@
 # Contributing
 
-1. Write or extend a `.feature` file under `features/<suite>/`. The first line tags the
-   suite (`@ui`, `@api`, `@visual` or `@accessibility`); add `@smoke` to quick checks.
-2. Reuse existing step wording from [VOCABULARY.md](VOCABULARY.md). Add new wording there too.
-   Step text must be unique within a suite.
-3. Put selectors in `pages/`, endpoints in `clients/`, shared plumbing in `core/`.
-   Step files hold only Gherkin glue: no selectors, URLs or raw HTTP calls.
-4. Respect the layering `steps -> pages/clients -> core`; `steps/api` never touches pages or
-   Playwright; the browser suites (`ui`, `visual`, `accessibility`) never touch clients.
-5. No hardcoded passwords. Use `settings.app_password` / `settings.api_password` and
+## The rules
+1. **Start from the structure.** A new area is `python tools/scaffold.py area <name> --suites ui,api`; a
+   reusable page part is `python tools/scaffold.py component <name>`. Do not create the folders by hand:
+   the scaffold output passes every gate. See "Where do I add a test?" in the README.
+2. **One feature file, one suite tag.** `features/<suite>/<area>/<name>.feature` starts with its suite tag
+   (`@ui`, `@api`, `@visual` or `@accessibility`) and optionally `@smoke`. Any other tag must be registered in
+   `pyproject.toml` and described in [TAGS.md](TAGS.md).
+3. **Reuse wording.** Take step text from [VOCABULARY.md](VOCABULARY.md) and add new wording there. Step text
+   is unique within a suite, and a step in `shared/` cannot be redefined by a browser suite.
+4. **Keep each thing in its layer.** Selectors in `pages/<area>/`, endpoints in `clients/<area>/`, plumbing
+   in `core/`. Step files are Gherkin glue only: no selectors, URLs or raw HTTP.
+5. **Respect the layering** `steps -> shared -> pages/clients -> core`. `steps/api` never touches pages,
+   shared code or Playwright; the browser suites (`ui`, `visual`, `accessibility`) never touch clients.
+6. **Areas stay independent.** `auth` never imports `cart` (steps, pages or clients). Needed by two areas?
+   Move it to `shared/` (fixtures, steps), `pages/components/` (page parts) or `core/`.
+7. **No hardcoded passwords.** Use `settings.app_password` / `settings.api_password` and
    `core.data.factories.random_password()` for deliberately wrong ones.
-6. Never skip, xfail or delete a failing test to pass a gate; fix the root cause.
-7. Before pushing: `make check` (ruff, import rules, mypy, rules checker), `make test-framework` if you
-   touched `core/` or `tools/`, and the suite you touched. New code gets type hints.
-8. Visual changes: baselines are local and gitignored. After an intended change run
-   `make update-baselines` and look at the new images before relying on them.
-9. Do not hand-edit `reports/`, `baselines/` or `requirements.lock` (edit `requirements.in`, then
-   regenerate the lock with `pip freeze` in a clean environment).
+8. **Never skip, xfail or delete a failing test to pass a gate.** Fix the root cause.
+9. **Before pushing:** `make check` (ruff, import rules, mypy, rules checker), `make test-framework` if you
+   touched `core/` or `tools/`, and the area you touched (`make area NAME=auth`). New code gets type hints.
+10. **Visual changes:** baselines are local and gitignored. After an intended change run
+    `make update-baselines` and look at the new images before relying on them.
+11. **Do not hand-edit** `reports/`, `baselines/` or `requirements.lock` (edit `requirements.in`, then
+    regenerate the lock with `pip freeze` in a clean environment).
+12. **Environments:** a new environment is a `config/<name>.env` file; per-environment usernames go in
+    `test_data/users.<name>.json`; `prod` needs `ALLOW_PROD=true` in the shell. See the README.
 
 ## Locator guidelines
 The Playwright cheat sheet is at the end of this file.
@@ -24,7 +33,7 @@ The Playwright cheat sheet is at the end of this file.
   and double as a basic accessibility check.
 - Use `get_by_test_id` (our `by_test()`, attribute `data-test`) when the page has no stable
   user-facing handle.
-- Use CSS only for structure that nothing user-facing describes (for example the `.pricebar` container).
+- Use CSS only for structure that nothing user-facing describes (for example the `.pricebar` container); reusable page parts are components in `pages/components/`.
 - Avoid long XPath chains and absolute paths such as `div > div > div:nth-child(3)`; they break
   when the layout changes. `tools/check_rules.py` fails on XPath, positional selectors,
   3+ level child chains and manual sleeps.
@@ -47,9 +56,10 @@ def _create(customer_client, cleanup):
 The `cleanup` fixture (steps/conftest.py) runs the callbacks after the test, newest first, whether the
 test passed or failed, and reports any callback that raised. tests_framework/test_steps_conftest.py
 proves this with real pytest sessions. Pass data between steps with `target_fixture=`, not shared dicts.
-Steps that two suites need go in `shared/login_steps.py`-style shared modules (star-imported, because
-pytest-bdd registers a step in the module that defines it); browser fixtures are in
-`shared/browser_fixtures.py`.
+Where shared code lives: steps that two suites need are in `shared/login_steps.py`-style modules
+(star-imported, because pytest-bdd registers a step in the module that defines it); an area's page fixtures
+that several suites use are in `shared/<area>_fixtures.py`; the browser matrix fixture is in
+`shared/browser_fixtures.py`. Fixtures for a whole suite are in `steps/<suite>/conftest.py`.
 
 ## Locator cheat sheet (Playwright, Python)
 

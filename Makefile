@@ -1,7 +1,7 @@
 PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest -q --tb=short
 
-.PHONY: install check api ui smoke visual accessibility cross-browser test-framework mutation audit doctor update-baselines parallel report serve
+.PHONY: area scaffold install check api ui smoke visual accessibility cross-browser test-framework mutation audit doctor update-baselines parallel report serve
 
 install:
 	$(PYTHON) -m pip install -r requirements.lock
@@ -60,3 +60,11 @@ report:
 
 serve:
 	allure serve reports/allure-results
+
+# one feature area across all suites: make area NAME=auth
+area:
+	$(PYTEST) steps --area $(NAME)
+
+# create a new area or component: make scaffold ARGS="area cart --suites ui,api"
+scaffold:
+	$(PYTHON) tools/scaffold.py $(ARGS)

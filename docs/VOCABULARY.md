@@ -31,3 +31,8 @@ the visual and accessibility suites. Parameters are in `{braces}`. A step text m
 - Then the inventory page has no blocking accessibility violations
 
 Roles come from `test_data/users.json`: standard, locked_out, visual, no_username, api.
+
+## New areas
+`tools/scaffold.py` gives every suite of a new area one wiring step, "the <area> page object is available"
+(browser suites) or "the <area> client is available" (api). It only proves the files are connected: replace it
+with the area's real steps and list them here.

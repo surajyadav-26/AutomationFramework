@@ -1,0 +1,8 @@
+# Who reviews what. The last matching line wins, so keep the general rules first.
+# Replace the owner with a team (for example @your-org/qa) when more people join, and add one line
+# per area when an area gets its own owner, for example:
+#   /features/*/cart/  /steps/*/cart/  /pages/cart/  /clients/cart/   @your-org/cart-team
+*                  @surajyadav-26
+/core/             @surajyadav-26
+/tools/            @surajyadav-26
+/.github/          @surajyadav-26

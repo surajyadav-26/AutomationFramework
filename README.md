@@ -3,15 +3,51 @@
 BDD test automation for UI, API, visual and accessibility checks. Python 3.12, pytest, pytest-bdd
 (Gherkin), Playwright, requests, Allure. No Docker anywhere.
 
+## Where do I add a test?
+1. **New behaviour in an existing area** (for example `auth`): add a `Scenario` to
+   `features/<suite>/auth/<name>.feature`, the matching steps to `steps/<suite>/auth/test_*_steps.py`,
+   page methods to `pages/auth/`, calls to `clients/auth/`. Reuse wording from `docs/VOCABULARY.md`.
+2. **A new feature area** (for example `cart`): `python tools/scaffold.py area cart --suites ui,api`
+   (or `make scaffold ARGS="area cart --suites ui,api"`). It creates every file in the right place, wired
+   and passing all gates. Then replace its wiring scenario with real ones.
+3. **A reusable piece of a page** (header, modal, table): `python tools/scaffold.py component modal`.
+4. **Something every area needs** (a fixture, a step two suites share): `shared/`.
+
+`make check` tells you if you put something in the wrong place.
+
+## Project layout
+```
+features/<suite>/<area>/*.feature     WHAT is tested (Gherkin), tagged @ui @api @visual @accessibility
+steps/<suite>/conftest.py             fixtures of the whole suite (baseline compare, axe check, API base URL)
+steps/<suite>/<area>/                 conftest.py and test_*_steps.py: glue only, no selectors, URLs or HTTP
+shared/                               fixtures and steps used by two or more areas or browser suites
+pages/<area>/                         page objects, ALL selectors live here
+pages/components/                     reusable page parts (Header, ...), built on core/browser/base_component.py
+clients/<area>/                       API clients, ALL endpoints live here
+core/                                 the engine: settings, browser, api, visual, accessibility, data, reporting
+  core/browser/plugin.py              pytest plugin: deterministic browser context, data-test id attribute
+  core/reporting/plugin.py            pytest plugin: settings applied to the run, areas, Allure grouping, report
+test_data/  config/                   users and schemas; URLs per environment
+tests_framework/  tools/              the framework's own tests; rule checkers, scaffold, mutation check
+conftest.py                           command line options (--area, --update-baselines) and plugin registration
+```
+An **area** is a folder name (`auth`, `cart`, ...) that ties the layers together: the same name appears under
+`features/<suite>/`, `steps/<suite>/`, `pages/` or `clients/`, and in the baseline path. It is never typed in
+code: the plugin reads it from the folder of the running test, tags every test with it (`-m auth`), uses it as
+the Allure group, and `--area auth` runs that area across all suites.
+
 | Suite | Target | Feature |
 |---|---|---|
-| UI | https://www.saucedemo.com | features/ui/login.feature |
-| API | https://dummyjson.com `POST /auth/login` | features/api/user.feature |
-| Visual | https://www.saucedemo.com | features/visual/login_visual.feature |
-| Accessibility | https://www.saucedemo.com | features/accessibility/login_accessibility.feature |
+| UI | https://www.saucedemo.com | features/ui/auth/login.feature |
+| API | https://dummyjson.com `POST /auth/login` | features/api/auth/user.feature |
+| Visual | https://www.saucedemo.com | features/visual/auth/login_visual.feature |
+| Accessibility | https://www.saucedemo.com | features/accessibility/auth/login_accessibility.feature |
 
-Layering: `features -> steps -> pages/clients -> core` (see AGENTS.md), enforced by `lint-imports`
-(configured in `pyproject.toml`) and `tools/check_rules.py`.
+Layering: `features -> steps -> shared -> pages/clients -> core`, and areas never import each other
+(shared code goes in `shared/`, `pages/components/` or `core/`). `lint-imports` (configured in
+`pyproject.toml`) and `tools/check_rules.py` enforce it, and also that every feature has its steps, page
+folder and `scenarios()` call, that tags are registered and documented (`docs/TAGS.md`), and that
+baselines sit in the right folder.
 
 ## Setup
 ```
@@ -32,14 +68,27 @@ with the team.
 | make | plain command |
 |---|---|
 | `make ui` / `api` / `visual` / `accessibility` | `python -m pytest steps/ui` (or `steps/api`, `steps/visual`, `steps/accessibility`) |
+| `make area NAME=auth` | `python -m pytest steps --area auth` (one area, all suites; `--area` repeats) |
 | `make smoke` | `python -m pytest steps -m smoke` |
 | `make parallel` | `python -m pytest steps -n 2` |
 | `make cross-browser` | `python -m pytest steps --browser chromium --browser firefox --browser webkit` |
 | `make update-baselines` | `python -m pytest steps/visual --update-baselines` |
+| `make scaffold ARGS="area cart"` | `python tools/scaffold.py area cart` (see "Where do I add a test?") |
 | `make check` | `ruff check .`, `ruff format --check .`, `lint-imports`, `mypy`, `python tools/check_rules.py` |
 | `make test-framework` | `python -m pytest -c tests_framework/pytest.ini tests_framework --cov --cov-fail-under=95` |
 | `make mutation` / `doctor` / `audit` | `python tools/mutation_check.py` / `python tools/check_env.py` / `pip-audit -r requirements.lock --no-deps --disable-pip` |
 | `make report` / `serve` | `allure generate ...` / `allure serve ...` (needs the Allure CLI) |
+
+## Environments
+`TEST_ENV` (default `qa`) picks `config/<TEST_ENV>.env` (the URLs). To add `uat` or `prod`:
+1. create `config/uat.env` with `APP_URL=` and `API_URL=`;
+2. optional, for passwords that differ: `.env.uat` (gitignored);
+3. optional, for usernames that differ: `test_data/users.uat.json` (only the roles that change; it is
+   merged over `test_data/users.json`);
+4. run with `TEST_ENV=uat python -m pytest steps`.
+
+`prod` and `production` are protected: the run refuses unless `ALLOW_PROD=true` is set **in the shell or the
+CI job**. A file cannot set it, so no one can leave production switched on by accident.
 
 ## Configuration reference
 Set these in `.env` (copy `.env.example`), per environment in `.env.<TEST_ENV>`, or as real environment
@@ -72,10 +121,10 @@ or environment appears in any committed file.
 ## Suites
 
 ### Visual (no Docker, so rendering differs per OS)
-- **Baselines are local.** They are stored per `baselines/<os>/<browser>/<WxH>/<name>.png` and are
+- **Baselines are local.** They are stored per `baselines/<os>/<browser>/<WxH>/<area>/<name>.png` and are
   **gitignored**: every developer creates their own with `make update-baselines` and checks the images by
-  eye. A missing baseline **fails** the test. `tools/check_rules.py` checks the folder layout, flags orphan
-  images that no step uses, and fails if a windows or macos baseline is committed.
+  eye. A missing baseline **fails** the test. `tools/check_rules.py` checks the folder layout and the area,
+  flags orphan images that no step of that area uses, and fails if a windows or macos baseline is committed.
 - **Comparison:** Pillow pixel diff, per-pixel tolerance 10, at most 0.1% of pixels differing, viewport
   1280x720 (and a phone 375x667 via `I am using a phone-sized screen`), UTC, en-US, animations disabled.
   Screenshots wait for the load event, web fonts and all images (not for "network idle").
@@ -86,7 +135,7 @@ or environment appears in any committed file.
   default because it would also hide a real 1px change such as a border colour.
 - **Threshold in practice:** 0.1% of a 1280x720 screenshot is about 920 pixels, so a few changed words can
   pass. Tighten it per test with `assert_matches_baseline(name, page_object, max_ratio=...)`.
-- Failures attach Baseline, Actual and Diff to Allure and save `<name>-<browser>-<WxH>-actual.png` /
+- Failures attach Baseline, Actual and Diff to Allure and save `<area>-<name>-<browser>-<WxH>-actual.png` /
   `-diff.png` in `reports/visual/`.
 
 ### Accessibility
@@ -100,7 +149,7 @@ Browser suites (ui, accessibility, visual) run on chromium by default. Pick brow
 pytest-playwright option, repeated per browser: `pytest steps --browser firefox --browser webkit`, or
 `make cross-browser` for all three. The API suite has no browser and runs once. Visual baselines are per
 browser, so generate them for each browser first. In Allure a cross-browser run shows one group per browser,
-e.g. `UI / Login (firefox)`.
+e.g. `UI / Auth (firefox) / Login`.
 
 ### API
 `API_MODE=stub` runs the API suite against an in-process fake of the auth endpoint, so it works offline
@@ -113,9 +162,8 @@ and when dummyjson is down. Retries happen only for infrastructure errors (timeo
 - **Allure results** go to `reports/allure-results` with `environment.properties`. Failures attach a
   screenshot, the Playwright **trace** (`trace.zip`; open with `python -m playwright show-trace <file>`)
   and **video**, and API calls attach their redacted request and response.
-- **Suites tab:** a full run groups tests as `UI`, `API`, `Visual` and `Accessibility`; a `-m smoke` run shows
-  one `Smoke` group with those underneath. The next level is named after the step file (`test_login_steps.py`
-  gives `Login`).
+- **Suites tab:** a full run groups tests as `<Suite> / <Area> / <Name>` (for example `UI / Auth / Login`);
+  a `-m smoke` run shows one `Smoke` group, then `<Suite> / <Area>`. Tags are described in `docs/TAGS.md`.
 - **Logs:** one file per day, `logs/application-YYYY-MM-DD.log`, shared by every suite and by parallel
   workers (lines carry the process id). Page objects log their actions; passwords are never logged.
 
@@ -123,16 +171,16 @@ and when dummyjson is down. Retries happen only for infrastructure errors (timeo
 | Gate | Command | What it checks |
 |---|---|---|
 | Lint and format | `ruff check .` / `ruff format --check .` | style and common bugs |
-| Architecture | `lint-imports`, `python tools/check_rules.py` | layering, no selectors/URLs/HTTP in steps, locator rules, baseline layout, leaked secrets |
-| Static typing | `mypy` (config in `pyproject.toml`) | type errors in `core`, `pages`, `clients`, `tools`, `steps` |
-| Framework self-tests | `make test-framework` | behaviour of `core/` and `tools/`, with a **95% coverage** floor |
-| Test the tests | `make mutation` | deliberately breaks the code in 27 places and fails if the self-tests do not notice; weekly in CI, about 10 minutes |
+| Architecture | `lint-imports`, `python tools/check_rules.py` | layering, areas, mirrored folders, tags, no selectors/URLs/HTTP in steps, locator rules, baseline layout, leaked secrets |
+| Static typing | `mypy` (config in `pyproject.toml`) | type errors in `core`, `pages`, `clients`, `shared`, `tools`, `steps` |
+| Framework self-tests | `make test-framework` | behaviour of `core/` and `tools/`, with a **95% coverage** floor; includes scaffolding a new area into a scratch copy and running every gate on it |
+| Test the tests | `make mutation` | deliberately breaks the code in dozens of places and fails if the self-tests do not notice; weekly in CI, about 15 minutes |
 | Environment | `make doctor` | installed packages equal `requirements.lock`, Python matches `.python-version`, every direct dependency is pinned; warns about the old `allure-pytest` that clashes with `allure-pytest-bdd` |
 | Dependency scan | `make audit` (`pip-audit`) | known vulnerabilities in the pinned packages |
 
-`tests_framework/` holds the framework's own tests (comparator, settings, redaction, rules checker, the
-browser layer against local HTML with a real Chromium, and more). It has its own pytest config, so it never
-touches the Allure results or logs of a normal run. Run it after changing anything in `core/` or `tools/`.
+`tests_framework/` holds the framework's own tests (comparator, settings, plugins, redaction, rules checker,
+scaffold, the browser layer against local HTML with a real Chromium, and more). It has its own pytest config,
+so it never touches the Allure results or logs of a normal run. Run it after changing `core/` or `tools/`.
 
 ## CI (GitHub Actions)
 `ci.yml` stages: `lint` (all quality gates) -> `api` -> `ui-smoke` -> `ui-full` -> `accessibility` and
@@ -143,6 +191,7 @@ permissions and a 30 minute timeout, and a newer push to a pull request cancels 
 `mutation.yml` runs the mutation check weekly. The `report` job merges the Allure results of all jobs, keeps
 run history (trend graphs) in the Actions cache, uploads the report as the `allure-report` artifact and,
 on `main`, publishes it to GitHub Pages; each run also gets a results table in its job summary.
+`.github/CODEOWNERS` names who reviews what (edit it when an area gets its own owner).
 
 **Visual tests do not run in CI**: their baselines are local to a machine (above). To bring them to CI
 later, generate baselines on a linux runner, commit them under `baselines/linux/`, and add a `visual` job.
@@ -155,6 +204,4 @@ later, generate baselines on a linux runner, commit them under `baselines/linux/
 4. Push or open a pull request. If `api` fails with "Repository secret ... is not set", step 2 is missing;
    a dummyjson read timeout is the public service being slow, so re-run the job.
 
-## Architecture
-`features -> steps -> pages/clients -> core`. See AGENTS.md for the rules and CONTRIBUTING.md for how to add
-a scenario, a page object or an API client.
+See `docs/CONTRIBUTING.md` for the rules of the road and the locator cheat sheet.
