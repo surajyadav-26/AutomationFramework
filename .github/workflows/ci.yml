@@ -33,6 +33,7 @@ jobs:
         with:
           browsers: chromium  # a few self-tests use a real browser on local HTML
       - run: python tools/check_env.py
+      - run: python tools/fingerprint.py  # the framework is the committed one (see README: copying)
       - run: ruff check .
       - run: ruff format --check .
       - run: lint-imports

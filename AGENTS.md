@@ -23,10 +23,12 @@ checks of the application under test (none yet). No Docker anywhere. README.md i
 - Tags: registered in pyproject.toml and listed in docs/TAGS.md. Step wording: docs/VOCABULARY.md.
 - Passwords only from APP_PASSWORD / API_PASSWORD env vars; never committed. prod needs ALLOW_PROD=true.
 - Never skip, xfail or delete a failing test to pass a gate. Fix the root cause.
+- Framework files are fingerprinted (framework.manifest.json): after changing core/, tools/, tests_framework/,
+  suite conftests, pins or rule config run `python tools/fingerprint.py --update`. Hooks: `make hooks`.
 
 ## Commands
 New area or component: `python tools/scaffold.py area <name> --suites ui,api` (never create folders by hand).
-`make install | check | api | ui | smoke | visual | accessibility | cross-browser | area | scaffold | test-framework | mutation | audit | doctor | update-baselines | parallel | report | serve`
+`make bootstrap | hooks | fingerprint | install | check | api | ui | smoke | visual | accessibility | cross-browser | area | scaffold | test-framework | mutation | audit | doctor | update-baselines | parallel | report | serve`
 
 Code in core/ and tools/ is covered by tests_framework/ (coverage gate 95%); run `make test-framework`
 after changing either. `make check` also runs mypy; add type hints to new code.

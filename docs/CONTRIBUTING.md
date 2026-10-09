@@ -24,7 +24,14 @@
     `make update-baselines` and look at the new images before relying on them.
 11. **Do not hand-edit** `reports/`, `baselines/` or `requirements.lock` (edit `requirements.in`, then
     regenerate the lock with `pip freeze` in a clean environment).
-12. **Environments:** a new environment is a `config/<name>.env` file; per-environment usernames go in
+12. **Install the hooks once** (`make bootstrap`, or `make hooks`): they run these rules before every commit
+    and push. Do not skip them with `--no-verify`; CI runs the same checks.
+13. **The framework is fingerprinted.** Adding tests (features, an area's steps, pages, clients, config,
+    test data, tags) never touches it. Changing `core/`, `tools/`, `tests_framework/`, a suite's
+    `conftest.py`, the dependency pins or the rule configuration in `pyproject.toml` fails
+    `python tools/fingerprint.py` until you run `python tools/fingerprint.py --update` and commit the
+    manifest together with the change, so every framework change is deliberate and visible in review.
+14. **Environments:** a new environment is a `config/<name>.env` file; per-environment usernames go in
     `test_data/users.<name>.json`; `prod` needs `ALLOW_PROD=true` in the shell. See the README.
 
 ## Locator guidelines

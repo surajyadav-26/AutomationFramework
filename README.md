@@ -21,6 +21,31 @@ collected"), which CI tolerates for now (see CI).
 
 `make check` tells you if you put something in the wrong place.
 
+## Copying the framework to another system
+The framework is the same everywhere when three things match: the code, the rules and the dependency pins.
+This repository can prove it:
+1. Copy the repository (or `git clone` it) to the new system.
+2. Run `python tools/bootstrap.py`. It checks the Python version, installs the pinned packages and the
+   browsers, creates `.env` from `.env.example` (it never overwrites yours), installs the git hooks and
+   verifies everything. `--check` only verifies, `--browsers all` adds firefox and webkit, `--full` also
+   runs every gate and the self-tests.
+3. Read the last lines. **"framework identical to its manifest"** means this copy is byte for byte the
+   framework of the original (`tools/fingerprint.py` against the committed `framework.manifest.json`).
+   If it names a changed or missing file, the framework was edited on one side: if that was intended, run
+   `python tools/fingerprint.py --update` and commit the manifest with the change; if not, restore the file.
+4. From here on only project files change when tests are added: features, the steps, pages and clients of
+   an area, `config/`, `test_data/`, tags and docs. They are not part of the fingerprint, so adding tests
+   never needs it. Changing `core/`, `tools/`, `tests_framework/`, the suite `conftest.py` files, the
+   dependency pins or the rule configuration in `pyproject.toml` does.
+
+### What stops a new test from breaking the rules
+- **Git hooks** (installed by bootstrap, or `make hooks`). `pre-commit` refuses a commit that breaks the
+  structure, tag or secret rules, has style errors in the staged Python, or stages `.env`. `pre-push` runs
+  everything `make check` runs plus the fingerprint.
+- **CI runs the same checks** in its `lint` job, so skipping a hook with `--no-verify` only moves the failure
+  to the pull request.
+- **The scaffold** (`tools/scaffold.py`) creates areas and components that already follow every rule.
+
 ## Project layout
 ```
 features/<suite>/<area>/*.feature     WHAT is tested (Gherkin), tagged @ui @api @visual @accessibility
@@ -52,6 +77,7 @@ folder and `scenarios()` call, that tags are registered and documented (`docs/TA
 baselines sit in the right folder.
 
 ## Setup
+On a new system: `python tools/bootstrap.py` does all of this and verifies it (see above). By hand:
 ```
 python -m pip install -r requirements.lock          # make install also installs the browsers
 python -m playwright install --with-deps chromium firefox webkit
@@ -75,6 +101,7 @@ with the team.
 | `make parallel` | `python -m pytest steps -n 2` |
 | `make cross-browser` | `python -m pytest steps --browser chromium --browser firefox --browser webkit` |
 | `make update-baselines` | `python -m pytest steps/visual --update-baselines` |
+| `make bootstrap` / `hooks` / `fingerprint` | `python tools/bootstrap.py` / `python tools/hooks.py install` / `python tools/fingerprint.py` (`ARGS=--update` after an intended framework change) |
 | `make scaffold ARGS="area cart"` | `python tools/scaffold.py area cart` (see "Where do I add a test?") |
 | `make check` | `ruff check .`, `ruff format --check .`, `lint-imports`, `mypy`, `python tools/check_rules.py` |
 | `make test-framework` | `python -m pytest -c tests_framework/pytest.ini tests_framework --cov --cov-fail-under=95` |

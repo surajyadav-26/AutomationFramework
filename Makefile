@@ -1,7 +1,7 @@
 PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest -q --tb=short
 
-.PHONY: area scaffold install check api ui smoke visual accessibility cross-browser test-framework mutation audit doctor update-baselines parallel report serve
+.PHONY: bootstrap hooks fingerprint area scaffold install check api ui smoke visual accessibility cross-browser test-framework mutation audit doctor update-baselines parallel report serve
 
 install:
 	$(PYTHON) -m pip install -r requirements.lock
@@ -68,3 +68,15 @@ area:
 # create a new area or component: make scaffold ARGS="area cart --suites ui,api"
 scaffold:
 	$(PYTHON) tools/scaffold.py $(ARGS)
+
+# set up this machine and verify it (installs, .env, git hooks); make bootstrap ARGS="--check" only verifies
+bootstrap:
+	$(PYTHON) tools/bootstrap.py $(ARGS)
+
+# git hooks that run the framework rules before every commit and push
+hooks:
+	$(PYTHON) tools/hooks.py install
+
+# is this copy the same framework? after an intended framework change: make fingerprint ARGS=--update
+fingerprint:
+	$(PYTHON) tools/fingerprint.py $(ARGS)

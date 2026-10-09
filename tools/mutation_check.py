@@ -87,6 +87,15 @@ MUTANTS = [
     Mutant("tools/scaffold.py", 'scenarios("{suite}/{area}/{area}.feature")', 'scenarios("{suite}/{area}.feature")', "scaffold: steps point at the wrong feature file"),
     Mutant("tools/scaffold.py", 'if "api" in suites:', "if False:", "scaffold: no client for the api suite"),
     Mutant("core/browser/base_component.py", "return self.root.get_by_test_id(test_id)", "return self.root.page.get_by_test_id(test_id)", "component: locators escape their own root"),
+    Mutant("tools/fingerprint.py", "elif recorded[name] != current[name]:", "elif False:", "fingerprint: changed files are not reported"),
+    Mutant("tools/fingerprint.py", "elif name not in recorded:", "elif False:", "fingerprint: new framework files are not reported"),
+    Mutant("tools/fingerprint.py", 'if path.is_file() and "__pycache__" not in path.parts:', "if path.is_file():", "fingerprint: caches count as framework files"),
+    Mutant("tools/hooks.py", "leaked = secret_files(names)", "leaked = []", "hooks: a staged .env is allowed"),
+    Mutant("tools/hooks.py", '("framework fingerprint", python("tools/fingerprint.py")),', "", "hooks: the push hook skips the fingerprint"),
+    Mutant("tools/hooks.py", 'if target.exists() and MARKER not in target.read_text(encoding="utf-8") and not force:', "if False:", "hooks: someone else's hook is overwritten"),
+    Mutant("tools/bootstrap.py", "if not check_only:", "if True:", "bootstrap: --check installs things"),
+    Mutant("tools/bootstrap.py", "shutil.copyfile(example, env)", "pass", "bootstrap: no .env is created"),
+    Mutant("tools/bootstrap.py", "if not check_python(root, report):", "if False:", "bootstrap: a wrong Python version is ignored"),
 ]  # fmt: skip
 
 
