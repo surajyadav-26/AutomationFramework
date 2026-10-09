@@ -1,38 +1,33 @@
 # Step vocabulary
 
-Wording per suite. The two steps marked (shared) are defined once in `shared/login_steps.py` and used by
-the visual and accessibility suites. Parameters are in `{braces}`. A step text may appear once per suite.
+One list of the step wording each suite uses, so the same action is always phrased the same way. Add a
+section per suite as steps are written. Parameters are in `{braces}`. A step text may appear once per
+suite, and a step defined in `shared/` cannot be redefined by a browser suite (`make check` enforces both).
 
-## UI (steps/ui/auth/test_login_steps.py)
+## How to list steps
+```
+## UI (steps/ui/<area>/test_<name>_steps.py)
 - Given I am on the login page
-- When I log in as the "{role}" user with a {valid|invalid} password
-- Then I see the products page
-- Then I see the login error "{message}"
+- When I log in as the "{role}" user
+- Then I see the dashboard
+```
+Mark a step defined once in `shared/` with "(shared)". Roles such as `{role}` come from
+`test_data/users.json` (a JSON object of role to username; `test_data/users.<env>.json` overrides roles per
+environment).
 
-## API (steps/api/auth/test_user_steps.py)
-- When I request a token with valid credentials
-- When I request a token with a wrong password
-- Then the response status is {status}
-- Then the response body matches the user schema
-- Then the response contains an access token
-- Then the response message is "{message}"
-
-## Visual (steps/visual/auth/test_login_visual_steps.py)
-- Given I am using a phone-sized screen (375x667; baselines are stored per viewport)
-- Given I am viewing the login page (shared)
-- When I sign in as the "{role}" user (shared)
-- Then the login page matches the baseline
-- Then the inventory page matches the baseline
-
-## Accessibility (steps/accessibility/auth/test_login_accessibility_steps.py)
-- Given I am viewing the login page
-- When I sign in as the "{role}" user
-- Then the login page has no blocking accessibility violations
-- Then the inventory page has no blocking accessibility violations
-
-Roles come from `test_data/users.json`: standard, locked_out, visual, no_username, api.
-
-## New areas
+## Scaffolded areas
 `tools/scaffold.py` gives every suite of a new area one wiring step, "the <area> page object is available"
-(browser suites) or "the <area> client is available" (api). It only proves the files are connected: replace it
-with the area's real steps and list them here.
+(browser suites) or "the <area> client is available" (api). It only proves the files are connected: replace
+it with the area's real steps and list them here.
+
+## UI
+_No steps yet._
+
+## API
+_No steps yet._
+
+## Visual
+_No steps yet._
+
+## Accessibility
+_No steps yet._

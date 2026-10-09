@@ -10,7 +10,7 @@ import pytest
 
 from core.data import factories
 from core.data.cleanup import Cleanup
-from core.data.factories import random_password, unique, username_for
+from core.data.factories import random_password, unique
 from core.reporting.log_files import daily_log_path, purge_old_logs
 
 
@@ -54,13 +54,6 @@ def test_unique_values_do_not_repeat_and_keep_the_prefix():
 
 def test_random_passwords_are_unique():
     assert random_password() != random_password()
-
-
-def test_known_roles_resolve_and_unknown_roles_fail_clearly():
-    assert username_for("standard") == "standard_user"
-    assert username_for("no_username") == ""
-    with pytest.raises(KeyError, match="unknown user role 'ghost'"):
-        username_for("ghost")
 
 
 # --- daily log files and retention -----------------------------------------------------------

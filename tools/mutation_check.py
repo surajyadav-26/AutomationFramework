@@ -57,7 +57,6 @@ MUTANTS = [
     Mutant("core/api/redaction.py", "SENSITIVE_KEY.search(key)", "None", "redaction: nothing is masked"),
     Mutant("core/api/redaction.py", "|secret|token|authori", "|secret|authori", "redaction: tokens are not masked"),
     Mutant("core/api/http_client.py", 'kwargs.setdefault("timeout", self.timeout)', "pass", "http client: no timeout"),
-    Mutant("core/api/stub_server.py", 'return self._send(400, {"message": "Invalid credentials"})', 'return self._send(200, {"message": "Invalid credentials"})', "stub server: bad login accepted"),
     Mutant("core/accessibility/axe_scanner.py", '.index(v.get("impact") or "minor") >= threshold', '.index(v.get("impact") or "minor") > threshold', "axe: threshold impact not included"),
     Mutant("core/browser/base_page.py", "visibility: hidden", "display: none", "base page: hiding changes the layout"),
     Mutant("core/browser/base_page.py", 'self.page.evaluate("document.fonts.ready.then(() => true)")', "pass", "base page: does not wait for fonts"),

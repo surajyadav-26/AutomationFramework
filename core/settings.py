@@ -16,7 +16,6 @@ from dotenv import dotenv_values, load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 VIEWPORT = {"width": 1280, "height": 720}
-PHONE_VIEWPORT = {"width": 375, "height": 667}
 TIMEZONE = "UTC"
 LOCALE = "en-US"
 
@@ -35,7 +34,6 @@ def _require(name: str) -> str:
 TRACE_MODES = ("off", "on", "retain-on-failure")
 VIDEO_MODES = ("off", "on", "retain-on-failure")
 ALLURE_THEMES = ("dark", "light")
-API_MODES = ("live", "stub")
 PROTECTED_ENVS = ("prod", "production")  # need ALLOW_PROD=true in the real environment
 IMPACTS = ("minor", "moderate", "serious", "critical")  # ascending severity
 
@@ -98,7 +96,6 @@ class Settings:
     a11y_fail_impact: str = "serious"  # lowest impact that fails an accessibility test
     a11y_include_best_practices: bool = True  # also scan axe best-practice rules (reported)
     api_timeout: float = 15.0  # seconds per API request
-    api_mode: str = "live"  # live: the real service; stub: in-process fake for offline runs
     rerun_count: int = 1  # reruns of a test after an infrastructure error (0 disables)
     rerun_delay: float = 1.0  # seconds between reruns
     visual_ignore_antialiasing: bool = False  # ignore 1-2px wide diffs (anti-aliasing noise)
@@ -143,7 +140,6 @@ def get_settings() -> Settings:
         a11y_fail_impact=_choice("A11Y_FAIL_IMPACT", "serious", IMPACTS),
         a11y_include_best_practices=_bool("A11Y_INCLUDE_BEST_PRACTICES", True),
         api_timeout=_float("API_TIMEOUT", 15.0, minimum=0.1),
-        api_mode=_choice("API_MODE", "live", API_MODES),
         rerun_count=_int("RERUN_COUNT", 1),
         rerun_delay=_float("RERUN_DELAY", 1.0),
         visual_ignore_antialiasing=_bool("VISUAL_IGNORE_ANTIALIASING", False),

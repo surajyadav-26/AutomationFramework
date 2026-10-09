@@ -13,13 +13,13 @@
    in `core/`. Step files are Gherkin glue only: no selectors, URLs or raw HTTP.
 5. **Respect the layering** `steps -> shared -> pages/clients -> core`. `steps/api` never touches pages,
    shared code or Playwright; the browser suites (`ui`, `visual`, `accessibility`) never touch clients.
-6. **Areas stay independent.** `auth` never imports `cart` (steps, pages or clients). Needed by two areas?
+6. **Areas stay independent.** `cart` never imports `checkout` (steps, pages or clients). Needed by two areas?
    Move it to `shared/` (fixtures, steps), `pages/components/` (page parts) or `core/`.
 7. **No hardcoded passwords.** Use `settings.app_password` / `settings.api_password` and
    `core.data.factories.random_password()` for deliberately wrong ones.
 8. **Never skip, xfail or delete a failing test to pass a gate.** Fix the root cause.
 9. **Before pushing:** `make check` (ruff, import rules, mypy, rules checker), `make test-framework` if you
-   touched `core/` or `tools/`, and the area you touched (`make area NAME=auth`). New code gets type hints.
+   touched `core/` or `tools/`, and the area you touched (`make area NAME=<area>`). New code gets type hints.
 10. **Visual changes:** baselines are local and gitignored. After an intended change run
     `make update-baselines` and look at the new images before relying on them.
 11. **Do not hand-edit** `reports/`, `baselines/` or `requirements.lock` (edit `requirements.in`, then
@@ -33,16 +33,16 @@ The Playwright cheat sheet is at the end of this file.
   and double as a basic accessibility check.
 - Use `get_by_test_id` (our `by_test()`, attribute `data-test`) when the page has no stable
   user-facing handle.
-- Use CSS only for structure that nothing user-facing describes (for example the `.pricebar` container); reusable page parts are components in `pages/components/`.
+- Use CSS only for structure that nothing user-facing describes (for example a layout wrapper); reusable page parts are components in `pages/components/`.
 - Avoid long XPath chains and absolute paths such as `div > div > div:nth-child(3)`; they break
   when the layout changes. `tools/check_rules.py` fails on XPath, positional selectors,
   3+ level child chains and manual sleeps.
 - Locators are lazy and auto-wait: do not add `time.sleep` or `wait_for_timeout`. Save a locator
-  as a property or variable and reuse it (see `LoginPage.login_button`).
+  as a property or variable and reuse it (for example a `submit_button` property on the page object).
 - Keep every locator in `pages/`, never in step files.
 
 ## Test data and cleanup (for stateful features)
-Login-only tests create nothing, so none of them registers cleanup yet. When a scenario creates data:
+No test registers cleanup yet because there are no tests. When a scenario creates data:
 ```python
 from core.data.factories import unique
 
@@ -56,7 +56,7 @@ def _create(customer_client, cleanup):
 The `cleanup` fixture (steps/conftest.py) runs the callbacks after the test, newest first, whether the
 test passed or failed, and reports any callback that raised. tests_framework/test_steps_conftest.py
 proves this with real pytest sessions. Pass data between steps with `target_fixture=`, not shared dicts.
-Where shared code lives: steps that two suites need are in `shared/login_steps.py`-style modules
+Where shared code lives: steps that two suites need are in `shared/<name>_steps.py` modules
 (star-imported, because pytest-bdd registers a step in the module that defines it); an area's page fixtures
 that several suites use are in `shared/<area>_fixtures.py`; the browser matrix fixture is in
 `shared/browser_fixtures.py`. Fixtures for a whole suite are in `steps/<suite>/conftest.py`.
@@ -82,7 +82,7 @@ that several suites use are in `shared/<area>_fixtures.py`; the browser matrix f
 | 2 | `get_by_label()` | form field label | `page.get_by_label("Password")` |
 | 3 | `get_by_placeholder()` | input placeholder | `page.get_by_placeholder("Username")` |
 | 4 | `get_by_text()` | visible text | `page.get_by_text("Products")` |
-| 5 | `get_by_alt_text()` | image alt | `page.get_by_alt_text("Sauce Labs Backpack")` |
+| 5 | `get_by_alt_text()` | image alt | `page.get_by_alt_text("Backpack")` |
 | 6 | `get_by_title()` | title attribute | `page.get_by_title("Close")` |
 | 7 | `get_by_test_id()` | test id attribute (`data-test` here) | `page.get_by_test_id("login-button")` |
 
@@ -132,7 +132,7 @@ Playwright-specific selectors: `button:has-text('Login')`, `button:text-is('Logi
 
 Click the button inside one specific product card:
 ```python
-page.get_by_test_id("inventory-item").filter(has_text="Sauce Labs Backpack").get_by_role(
+page.get_by_test_id("product-card").filter(has_text="Backpack").get_by_role(
     "button", name="Add to cart"
 ).click()
 ```
@@ -146,7 +146,7 @@ page.locator(":focus")  # focused element
 
 ### 6. Several matches
 ```python
-items = page.get_by_test_id("inventory-item")
+items = page.get_by_test_id("product-card")
 items.count()  # number of matches
 items.all()  # list of locators
 items.all_inner_texts()  # list of texts

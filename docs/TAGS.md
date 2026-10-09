@@ -25,8 +25,8 @@ A feature in `features/ui/` must be tagged `@ui`, and so on; the checker enforce
 ## Area markers (added automatically, never typed)
 
 Every test gets a marker named after its area, the folder under the suite: a test in
-`steps/ui/auth/` is marked `auth`. Run one area across all suites with `pytest --area auth`
-(repeatable) or `pytest -m auth`. Areas are discovered from `features/<suite>/<area>/`; the names `ui`,
+`steps/ui/cart/` is marked `cart`. Run one area across all suites with `pytest --area cart`
+(repeatable) or `pytest -m cart`. Areas are discovered from `features/<suite>/<area>/`; the names `ui`,
 `api`, `visual`, `accessibility`, `smoke`, `shared` and `components` are reserved.
 
 ## Adding a tag

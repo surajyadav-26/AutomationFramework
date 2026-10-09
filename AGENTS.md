@@ -1,9 +1,9 @@
 # Automation framework
 
 BDD test framework (pytest-bdd + Playwright + requests) for UI, API, visual and accessibility
-checks against saucedemo.com and dummyjson.com. No Docker anywhere. README.md is the map.
+checks of the application under test (none yet). No Docker anywhere. README.md is the map.
 
-## Structure (an "area" such as auth ties the folders together; the scaffold creates them)
+## Structure (an "area", e.g. cart, ties the folders together; the scaffold creates them)
 - features/<suite>/<area>/   Gherkin, first line tagged @ui/@api/@visual/@accessibility (+ @smoke)
 - steps/<suite>/<area>/      glue only, no selectors/URLs/HTTP; steps/<suite>/conftest.py = suite fixtures
 - shared/                    fixtures and steps used by two or more areas or browser suites (never by api)

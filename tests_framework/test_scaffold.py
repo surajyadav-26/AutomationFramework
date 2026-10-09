@@ -201,7 +201,8 @@ def scratch_project(tmp_path_factory):
     target = tmp_path_factory.mktemp("scratch")
     ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
     for folder in COPIED_FOLDERS:
-        shutil.copytree(ROOT / folder, target / folder, ignore=ignore)
+        if (ROOT / folder).exists():  # features/ is empty (so absent from git) until a first area
+            shutil.copytree(ROOT / folder, target / folder, ignore=ignore)
     for name in COPIED_FILES:
         shutil.copy(ROOT / name, target / name)
     return target
@@ -214,7 +215,6 @@ def tool(scratch, *command):
         "ALLURE_AUTO_OPEN": "false",
         "APP_PASSWORD": "dummy-ui",
         "API_PASSWORD": "dummy-api",
-        "API_MODE": "stub",
     }
     return subprocess.run(
         [sys.executable, *command], cwd=scratch, env=env, capture_output=True, text=True

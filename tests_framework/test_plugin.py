@@ -241,10 +241,10 @@ def test_an_unknown_area_is_a_usage_error_that_lists_the_known_ones(configured, 
 
 def test_bad_settings_become_a_clean_usage_error(monkeypatch, tmp_path):
     def broken():
-        raise MissingSettingError("API_MODE='x' is invalid")
+        raise MissingSettingError("TRACE_MODE='x' is invalid")
 
     monkeypatch.setattr(plugin, "get_settings", broken)
-    with pytest.raises(pytest.UsageError, match="API_MODE"):
+    with pytest.raises(pytest.UsageError, match="TRACE_MODE"):
         plugin.pytest_configure(FakeConfig(rootpath=tmp_path))
 
 
@@ -517,8 +517,8 @@ def test_reruns_come_from_the_environment_and_retried_tests_are_listed(
 
 
 def test_a_setting_error_is_reported_without_a_traceback(session_project, monkeypatch):
-    monkeypatch.setenv("API_MODE", "bogus")
+    monkeypatch.setenv("TRACE_MODE", "bogus")
     result = session_project.runpytest_subprocess(*INNER)
     assert result.ret != 0
-    result.stderr.fnmatch_lines(["*API_MODE='bogus' is invalid*"])
+    result.stderr.fnmatch_lines(["*TRACE_MODE='bogus' is invalid*"])
     assert "Traceback" not in result.stderr.str()

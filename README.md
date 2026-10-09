@@ -3,10 +3,16 @@
 BDD test automation for UI, API, visual and accessibility checks. Python 3.12, pytest, pytest-bdd
 (Gherkin), Playwright, requests, Allure. No Docker anywhere.
 
+**Status: the framework contains no tests yet.** Everything that was written to prove it works against demo
+sites has been removed; what is left is the engine, its own tests (`tests_framework/`) and the tools. Create
+the first area of the real application with `python tools/scaffold.py area <name>`, and replace the
+placeholder URLs in `config/qa.env`. Until a suite has scenarios, `pytest` exits with code 5 ("no tests
+collected"), which CI tolerates for now (see CI).
+
 ## Where do I add a test?
-1. **New behaviour in an existing area** (for example `auth`): add a `Scenario` to
-   `features/<suite>/auth/<name>.feature`, the matching steps to `steps/<suite>/auth/test_*_steps.py`,
-   page methods to `pages/auth/`, calls to `clients/auth/`. Reuse wording from `docs/VOCABULARY.md`.
+1. **New behaviour in an existing area**: add a `Scenario` to `features/<suite>/<area>/<name>.feature`, the
+   matching steps to `steps/<suite>/<area>/test_*_steps.py`, page methods to `pages/<area>/`, calls to
+   `clients/<area>/`. Reuse wording from `docs/VOCABULARY.md`.
 2. **A new feature area** (for example `cart`): `python tools/scaffold.py area cart --suites ui,api`
    (or `make scaffold ARGS="area cart --suites ui,api"`). It creates every file in the right place, wired
    and passing all gates. Then replace its wiring scenario with real ones.
@@ -22,7 +28,7 @@ steps/<suite>/conftest.py             fixtures of the whole suite (baseline comp
 steps/<suite>/<area>/                 conftest.py and test_*_steps.py: glue only, no selectors, URLs or HTTP
 shared/                               fixtures and steps used by two or more areas or browser suites
 pages/<area>/                         page objects, ALL selectors live here
-pages/components/                     reusable page parts (Header, ...), built on core/browser/base_component.py
+pages/components/                     reusable page parts (header, modal, table), built on core/browser/base_component.py
 clients/<area>/                       API clients, ALL endpoints live here
 core/                                 the engine: settings, browser, api, visual, accessibility, data, reporting
   core/browser/plugin.py              pytest plugin: deterministic browser context, data-test id attribute
@@ -36,12 +42,8 @@ An **area** is a folder name (`auth`, `cart`, ...) that ties the layers together
 code: the plugin reads it from the folder of the running test, tags every test with it (`-m auth`), uses it as
 the Allure group, and `--area auth` runs that area across all suites.
 
-| Suite | Target | Feature |
-|---|---|---|
-| UI | https://www.saucedemo.com | features/ui/auth/login.feature |
-| API | https://dummyjson.com `POST /auth/login` | features/api/auth/user.feature |
-| Visual | https://www.saucedemo.com | features/visual/auth/login_visual.feature |
-| Accessibility | https://www.saucedemo.com | features/accessibility/auth/login_accessibility.feature |
+Four suites exist as empty slots, each with its own fixtures in `steps/<suite>/conftest.py`: **ui**,
+**api**, **visual** and **accessibility**. There are no scenarios until the first area is scaffolded.
 
 Layering: `features -> steps -> shared -> pages/clients -> core`, and areas never import each other
 (shared code goes in `shared/`, `pages/components/` or `core/`). `lint-imports` (configured in
@@ -107,7 +109,7 @@ stops the run with a message naming the setting.
 | `ALLURE_AUTO_OPEN` / `ALLURE_THEME` | `true` / `dark` | build and open the Allure report when a run ends (never in CI; needs the Allure CLI); `dark` or `light` (a theme picked in the browser wins) |
 | `A11Y_FAIL_IMPACT` | `serious` | lowest axe impact that fails an accessibility test: `minor`, `moderate`, `serious`, `critical` |
 | `A11Y_INCLUDE_BEST_PRACTICES` | `true` | also scan axe best-practice rules; they are reported and only fail a test if the impact threshold is set low |
-| `API_TIMEOUT` / `API_MODE` | `15` / `live` | request timeout in seconds; `live` = the real dummyjson, `stub` = in-process fake of the auth endpoint with no network (proves the test logic, not the real service) |
+| `API_TIMEOUT` | `15` | request timeout in seconds |
 | `ALLOW_PROD` | unset | must be `true` **in the shell or CI job** (not in a file) to run with `TEST_ENV=prod` or `production`; any other value refuses |
 | `RERUN_COUNT` / `RERUN_DELAY` | `1` / `1` | reruns after infrastructure errors only, and the pause in seconds (`--reruns N` on the command line wins) |
 | `VISUAL_IGNORE_ANTIALIASING` | `false` | ignore 1-2px wide visual differences |
@@ -126,10 +128,10 @@ or environment appears in any committed file.
   eye. A missing baseline **fails** the test. `tools/check_rules.py` checks the folder layout and the area,
   flags orphan images that no step of that area uses, and fails if a windows or macos baseline is committed.
 - **Comparison:** Pillow pixel diff, per-pixel tolerance 10, at most 0.1% of pixels differing, viewport
-  1280x720 (and a phone 375x667 via `I am using a phone-sized screen`), UTC, en-US, animations disabled.
+  1280x720 (`BasePage.resize(width, height)` for other sizes), UTC, en-US, animations disabled.
   Screenshots wait for the load event, web fonts and all images (not for "network idle").
 - **Volatile content:** page objects declare `hidden_selectors` (made invisible in place; layout and
-  neighbours stay in the picture, e.g. the random prices) or `masked_selectors` (painted over with a solid
+  neighbours stay in the picture, e.g. prices or dates that change on every load) or `masked_selectors` (painted over with a solid
   box that follows the element size).
 - **Anti-aliasing:** `VISUAL_IGNORE_ANTIALIASING=true` ignores differences only 1-2 pixels wide. Off by
   default because it would also hide a real 1px change such as a border colour.
@@ -140,8 +142,7 @@ or environment appears in any committed file.
 
 ### Accessibility
 `@accessibility` scenarios scan the page with axe-core (axe-playwright-python) against WCAG 2.x level A/AA
-rules, plus axe's best-practice rules (for example `page-has-heading-one`, `region`; both moderate on
-saucedemo). A test fails on violations at or above `A11Y_FAIL_IMPACT`; every violation, whatever its impact,
+rules, plus axe's best-practice rules (for example `page-has-heading-one`, `region`, usually moderate). A test fails on violations at or above `A11Y_FAIL_IMPACT`; every violation, whatever its impact,
 is attached to the Allure report as JSON.
 
 ### Cross-browser
@@ -149,11 +150,11 @@ Browser suites (ui, accessibility, visual) run on chromium by default. Pick brow
 pytest-playwright option, repeated per browser: `pytest steps --browser firefox --browser webkit`, or
 `make cross-browser` for all three. The API suite has no browser and runs once. Visual baselines are per
 browser, so generate them for each browser first. In Allure a cross-browser run shows one group per browser,
-e.g. `UI / Auth (firefox) / Login`.
+e.g. `UI / <Area> (firefox) / <Name>`.
 
 ### API
-`API_MODE=stub` runs the API suite against an in-process fake of the auth endpoint, so it works offline
-and when dummyjson is down. Retries happen only for infrastructure errors (timeouts, connection errors,
+`HttpClient` logs every call, attaches the redacted request and response to Allure, and uses `API_TIMEOUT`.
+Retries happen only for infrastructure errors (timeouts, connection errors,
 `net::ERR_*`), never for assertion failures; the patterns live in `pyproject.toml` and are checked by
 `tests_framework/test_rerun_filter.py`. Tests that were retried are listed at the end of the run under
 "retried after infrastructure errors", so flaky infrastructure stays visible.
@@ -162,7 +163,7 @@ and when dummyjson is down. Retries happen only for infrastructure errors (timeo
 - **Allure results** go to `reports/allure-results` with `environment.properties`. Failures attach a
   screenshot, the Playwright **trace** (`trace.zip`; open with `python -m playwright show-trace <file>`)
   and **video**, and API calls attach their redacted request and response.
-- **Suites tab:** a full run groups tests as `<Suite> / <Area> / <Name>` (for example `UI / Auth / Login`);
+- **Suites tab:** a full run groups tests as `<Suite> / <Area> / <Name>` (for example `UI / Cart / Checkout`);
   a `-m smoke` run shows one `Smoke` group, then `<Suite> / <Area>`. Tags are described in `docs/TAGS.md`.
 - **Logs:** one file per day, `logs/application-YYYY-MM-DD.log`, shared by every suite and by parallel
   workers (lines carry the process id). Page objects log their actions; passwords are never logged.
@@ -202,6 +203,6 @@ later, generate baselines on a linux runner, commit them under `baselines/linux/
 3. Optional, to publish the report: Settings > Pages > Source: **GitHub Actions**. Without it the publish
    steps are skipped without failing the run.
 4. Push or open a pull request. If `api` fails with "Repository secret ... is not set", step 2 is missing;
-   a dummyjson read timeout is the public service being slow, so re-run the job.
+   a timeout from the service under test is not a framework problem; re-run the job.
 
 See `docs/CONTRIBUTING.md` for the rules of the road and the locator cheat sheet.

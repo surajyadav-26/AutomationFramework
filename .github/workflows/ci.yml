@@ -21,6 +21,8 @@ env:
 
 # Every job: check out, then ./.github/actions/setup (Python, pinned dependencies, browsers).
 # Visual tests are not run here: their baselines are local to a developer machine (see README.md).
+# Exit code 5 ("no tests collected") is accepted in the test jobs while the framework has no scenarios;
+# delete the `|| test $? -eq 5` parts once the first real tests exist, so a vanished suite is an error..
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -52,7 +54,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           check-secrets: "true"
-      - run: pytest steps/api -q --tb=short
+      - run: pytest steps/api -q --tb=short || test $? -eq 5  # 5 = no tests collected yet
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -73,7 +75,7 @@ jobs:
         with:
           browsers: chromium
           check-secrets: "true"
-      - run: pytest steps/ui -m smoke -q --tb=short
+      - run: pytest steps/ui -m smoke -q --tb=short || test $? -eq 5
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -100,7 +102,7 @@ jobs:
         with:
           browsers: chromium
           check-secrets: "true"
-      - run: pytest steps/ui -q --tb=short -n 2
+      - run: pytest steps/ui -q --tb=short -n 2 || test $? -eq 5
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -127,7 +129,7 @@ jobs:
         with:
           browsers: chromium
           check-secrets: "true"
-      - run: pytest steps/accessibility -q --tb=short
+      - run: pytest steps/accessibility -q --tb=short || test $? -eq 5
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -158,7 +160,7 @@ jobs:
         with:
           browsers: ${{ matrix.browser }}
           check-secrets: "true"
-      - run: pytest steps/ui steps/accessibility -q --tb=short -n 2 --browser ${{ matrix.browser }}
+      - run: pytest steps/ui steps/accessibility -q --tb=short -n 2 --browser ${{ matrix.browser }} || test $? -eq 5
       - uses: actions/upload-artifact@v4
         if: always()
         with:

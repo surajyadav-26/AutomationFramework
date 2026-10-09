@@ -26,7 +26,6 @@ KEYS = [
     "A11Y_FAIL_IMPACT",
     "A11Y_INCLUDE_BEST_PRACTICES",
     "API_TIMEOUT",
-    "API_MODE",
     "RERUN_COUNT",
     "RERUN_DELAY",
     "ATTACH_TRACE_AND_VIDEO",
@@ -188,18 +187,16 @@ def test_qa_needs_no_confirmation(monkeypatch):
 def test_defaults_match_the_previous_hardcoded_behaviour():
     s = get_settings()
     assert s.api_timeout == 15.0
-    assert s.api_mode == "live"
     assert s.rerun_count == 1
     assert s.rerun_delay == 1.0
 
 
 def test_values_can_be_changed(monkeypatch):
     monkeypatch.setenv("API_TIMEOUT", "2.5")
-    monkeypatch.setenv("API_MODE", "STUB")
     monkeypatch.setenv("RERUN_COUNT", "0")
     monkeypatch.setenv("RERUN_DELAY", "0")
     s = get_settings()
-    assert (s.api_timeout, s.api_mode, s.rerun_count, s.rerun_delay) == (2.5, "stub", 0, 0.0)
+    assert (s.api_timeout, s.rerun_count, s.rerun_delay) == (2.5, 0, 0.0)
 
 
 @pytest.mark.parametrize(
@@ -208,7 +205,6 @@ def test_values_can_be_changed(monkeypatch):
         ("API_TIMEOUT", "fast"),
         ("API_TIMEOUT", "0"),
         ("API_TIMEOUT", "-3"),
-        ("API_MODE", "fake"),
         ("RERUN_COUNT", "one"),
         ("RERUN_DELAY", "soon"),
     ],
