@@ -1,7 +1,7 @@
 """Steps shared by the visual and accessibility suites.
 
 Import them into a suite's step module to use them:
-    from steps._login_steps import *  # noqa: F403
+    from shared.login_steps import *  # noqa: F403
 pytest-bdd registers a step in the module that defines it, so a plain import of the functions is
 not enough; the star import also brings in the registered step fixtures.
 """

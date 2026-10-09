@@ -8,7 +8,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["core", "pages", "clients", "tools", "steps", "conftest.py"]
+files = ["core", "pages", "clients", "shared", "tools", "steps", "conftest.py"]
 check_untyped_defs = true
 no_implicit_optional = true
 warn_redundant_casts = true
@@ -56,22 +56,22 @@ addopts = [
 
 # Architecture rules, checked by `lint-imports`: features -> steps -> pages/clients -> core.
 [tool.importlinter]
-root_packages = ["steps", "pages", "clients", "core"]
+root_packages = ["steps", "shared", "pages", "clients", "core"]
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
-name = "steps -> pages/clients -> core"
+name = "steps -> shared -> pages/clients -> core"
 type = "layers"
-layers = ["steps", "pages | clients", "core"]
+layers = ["steps", "shared", "pages | clients", "core"]
 
 [[tool.importlinter.contracts]]
-name = "steps.api never imports pages or Playwright"
+name = "steps.api never imports pages, shared or Playwright"
 type = "forbidden"
 source_modules = ["steps.api"]
-forbidden_modules = ["pages", "playwright", "pytest_playwright"]
+forbidden_modules = ["pages", "shared", "playwright", "pytest_playwright"]
 
 [[tool.importlinter.contracts]]
-name = "steps.ui, steps.visual and steps.accessibility never import clients"
+name = "browser suites and shared never import clients"
 type = "forbidden"
-source_modules = ["steps.ui", "steps.visual", "steps.accessibility"]
+source_modules = ["steps.ui", "steps.visual", "steps.accessibility", "shared"]
 forbidden_modules = ["clients"]

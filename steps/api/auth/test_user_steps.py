@@ -7,7 +7,7 @@ from pytest_bdd import parsers, scenarios, then, when
 from core.api.validator import validate_schema
 from core.data.factories import random_password, username_for
 
-scenarios("api/user.feature")
+scenarios("api/auth/user.feature")
 
 
 @when("I request a token with valid credentials", target_fixture="response")

@@ -20,7 +20,7 @@ env:
   ATTACH_TRACE_AND_VIDEO: "false"
 
 # Every job: check out, then ./.github/actions/setup (Python, pinned dependencies, browsers).
-# Visual tests are not run here: their baselines are local to a developer machine (see docs/README.md).
+# Visual tests are not run here: their baselines are local to a developer machine (see README.md).
 jobs:
   lint:
     runs-on: ubuntu-latest

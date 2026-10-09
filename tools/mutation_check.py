@@ -61,7 +61,7 @@ MUTANTS = [
     Mutant("core/accessibility/axe_scanner.py", '.index(v.get("impact") or "minor") >= threshold', '.index(v.get("impact") or "minor") > threshold', "axe: threshold impact not included"),
     Mutant("core/browser/base_page.py", "visibility: hidden", "display: none", "base page: hiding changes the layout"),
     Mutant("core/browser/base_page.py", 'self.page.evaluate("document.fonts.ready.then(() => true)")', "pass", "base page: does not wait for fonts"),
-    Mutant("steps/conftest.py", "if isinstance(mark, str | pytest.MarkDecorator):", "if False:", "steps conftest: suite grouping never applied"),
+    Mutant("core/reporting/plugin.py", "if isinstance(mark, str | pytest.MarkDecorator):", "if False:", "plugin: suite grouping never applied"),
     Mutant("tools/check_rules.py", '"URL": re.compile(r"https?://"),', '"URL": re.compile(r"NEVERMATCH"),', "check_rules: URLs allowed in steps"),
     Mutant("tools/check_rules.py", 'if used and file_name[: -len(".png")] not in used:', "if False:", "check_rules: orphan baselines allowed"),
     Mutant("tools/check_rules.py", "if SECRET_ASSIGNMENT.search(line):", "if False:", "check_rules: secret literals allowed"),

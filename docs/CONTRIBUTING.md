@@ -47,9 +47,9 @@ def _create(customer_client, cleanup):
 The `cleanup` fixture (steps/conftest.py) runs the callbacks after the test, newest first, whether the
 test passed or failed, and reports any callback that raised. tests_framework/test_steps_conftest.py
 proves this with real pytest sessions. Pass data between steps with `target_fixture=`, not shared dicts.
-Steps that two suites need go in `steps/_login_steps.py`-style shared modules (star-imported, because
+Steps that two suites need go in `shared/login_steps.py`-style shared modules (star-imported, because
 pytest-bdd registers a step in the module that defines it); browser fixtures are in
-`steps/_browser_fixtures.py`.
+`shared/browser_fixtures.py`.
 
 ## Locator cheat sheet (Playwright, Python)
 

@@ -13,7 +13,7 @@ from core.settings import ROOT, Settings
 from core.visual import baseline_store
 from core.visual.comparator import MAX_DIFF_RATIO, compare
 from core.visual.masking import locators_for
-from steps._browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
+from shared.browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
 
 DIFF_DIR = ROOT / "reports" / "visual"
 

@@ -9,7 +9,7 @@ from playwright.sync_api import Page
 
 from core.accessibility.axe_scanner import blocking, describe, scan
 from core.settings import Settings
-from steps._browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
+from shared.browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
 
 
 @pytest.fixture

@@ -145,3 +145,35 @@ def test_best_practice_rules_only_appear_when_asked_for(base_page):
     extended_rules = {v["id"] for v in scan(base_page.page, include_best_practices=True)}
     assert "region" not in default_rules
     assert "region" in extended_rules
+
+
+# --- the browser plugin's fixtures (called directly: the real sessions use them end to end) -------
+
+
+def test_the_browser_context_is_fixed_for_deterministic_screenshots():
+    from core.browser import plugin
+    from core.settings import LOCALE, TIMEZONE, VIEWPORT
+
+    build = plugin.browser_context_args._get_wrapped_function()
+    context = build({"ignore_https_errors": True})
+    assert context["viewport"] == VIEWPORT
+    assert context["viewport"] is not VIEWPORT  # a copy: nobody can change the constant
+    assert (context["locale"], context["timezone_id"]) == (LOCALE, TIMEZONE)
+    assert context["reduced_motion"] == "reduce"
+    assert context["ignore_https_errors"] is True  # what pytest-playwright already set is kept
+
+
+def test_the_test_id_attribute_is_set_to_data_test():
+    from core.browser import plugin
+
+    class FakePlaywright:
+        def __init__(self):
+            self.attributes = []
+            self.selectors = self
+
+        def set_test_id_attribute(self, name):
+            self.attributes.append(name)
+
+    fake = FakePlaywright()
+    assert plugin.playwright._get_wrapped_function()(fake) is fake
+    assert fake.attributes == ["data-test"]

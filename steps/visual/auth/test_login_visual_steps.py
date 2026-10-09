@@ -5,9 +5,9 @@ from __future__ import annotations
 from pytest_bdd import given, scenarios, then
 
 from core.settings import PHONE_VIEWPORT
-from steps._login_steps import *  # noqa: F403  (pytest-bdd registers steps per module)
+from shared.login_steps import *  # noqa: F403  (pytest-bdd registers steps per module)
 
-scenarios("visual/login_visual.feature")
+scenarios("visual/auth/login_visual.feature")
 
 
 @given("I am using a phone-sized screen")

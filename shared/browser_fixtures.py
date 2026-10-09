@@ -1,7 +1,7 @@
 """Fixtures shared by the browser suites (ui, visual, accessibility).
 
 Each suite conftest re-exports what it needs:
-    from steps._browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
+    from shared.browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
 They live here, and not in steps/conftest.py, so the API suite never sees browser fixtures.
 """
 
@@ -11,8 +11,8 @@ import pytest
 from playwright.sync_api import Page
 
 from core.settings import Settings
-from pages.dashboard_page import DashboardPage
-from pages.login_page import LoginPage
+from pages.auth.dashboard_page import DashboardPage
+from pages.auth.login_page import LoginPage
 
 
 @pytest.fixture

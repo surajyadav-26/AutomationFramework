@@ -17,28 +17,37 @@ from core.reporting.allure_report import THEME_SCRIPT, apply_theme, generate_and
 # --- Allure suite grouping and environment properties --------------------------------------
 
 
-def labels(markers, area, smoke_run):
-    return suite_labels(markers, area, smoke_run)
+def labels(markers, area, name, smoke_run):
+    return suite_labels(markers, area, name, smoke_run)
 
 
-def test_full_run_groups_by_suite_then_area():
-    assert labels({"ui", "smoke"}, "Login", smoke_run=False) == [
+def test_full_run_groups_by_suite_then_area_then_name():
+    assert labels({"ui", "smoke"}, "Auth", "Login", smoke_run=False) == [
         ("parentSuite", "UI"),
-        ("suite", "Login"),
+        ("suite", "Auth"),
+        ("subSuite", "Login"),
     ]
 
 
 def test_smoke_run_nests_suites_under_smoke():
-    assert labels({"api"}, "User", smoke_run=True) == [
+    assert labels({"api"}, "Auth", "User", smoke_run=True) == [
         ("parentSuite", "Smoke"),
         ("suite", "API"),
-        ("subSuite", "User"),
+        ("subSuite", "Auth"),
     ]
+
+
+def test_without_an_area_the_name_takes_its_place():
+    assert labels({"ui"}, None, "Login", smoke_run=False) == [
+        ("parentSuite", "UI"),
+        ("suite", "Login"),
+    ]
+    assert labels({"ui"}, None, "Login", smoke_run=True)[2] == ("subSuite", "Login")
 
 
 def test_every_suite_has_a_display_name_and_unknown_falls_back():
     names = {
-        marker: labels({marker}, "A", smoke_run=False)[0][1]
+        marker: labels({marker}, "A", "N", smoke_run=False)[0][1]
         for marker in ("ui", "api", "visual", "accessibility")
     }
     assert names == {
@@ -47,7 +56,7 @@ def test_every_suite_has_a_display_name_and_unknown_falls_back():
         "visual": "Visual",
         "accessibility": "Accessibility",
     }
-    assert labels({"smoke"}, "A", smoke_run=False)[0][1] == "Other"
+    assert labels({"smoke"}, "A", "N", smoke_run=False)[0][1] == "Other"
 
 
 def test_environment_properties_file(tmp_path):

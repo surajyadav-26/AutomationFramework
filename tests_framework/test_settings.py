@@ -229,9 +229,9 @@ def setting_names():
 
 
 def test_every_setting_is_documented_in_the_readme():
-    readme = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
     missing = sorted(name for name in setting_names() if name not in readme)
-    assert missing == [], f"add these settings to docs/README.md: {missing}"
+    assert missing == [], f"add these settings to README.md: {missing}"
 
 
 def test_every_setting_is_in_env_example_or_a_config_file():

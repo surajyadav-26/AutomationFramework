@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pytest_bdd import scenarios, then
 
-from steps._login_steps import *  # noqa: F403  (pytest-bdd registers steps per module)
+from shared.login_steps import *  # noqa: F403  (pytest-bdd registers steps per module)
 
-scenarios("accessibility/login_accessibility.feature")
+scenarios("accessibility/auth/login_accessibility.feature")
 
 
 @then("the login page has no blocking accessibility violations")
