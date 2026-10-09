@@ -1,3 +1,3 @@
-"""Fixtures for the UI suite (the page objects come from the shared browser fixtures)."""
+"""Fixtures of the auth area (UI suite)."""
 
-from shared.browser_fixtures import browser_matrix, dashboard_page, login_page  # noqa: F401
+from shared.auth_fixtures import dashboard_page, login_page  # noqa: F401

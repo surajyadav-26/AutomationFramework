@@ -177,3 +177,57 @@ def test_the_test_id_attribute_is_set_to_data_test():
     fake = FakePlaywright()
     assert plugin.playwright._get_wrapped_function()(fake) is fake
     assert fake.attributes == ["data-test"]
+
+
+# --- components: scoped to their own root ----------------------------------------------
+
+HEADER_HTML = (
+    '<header data-test="primary-header"><button>Open Menu</button><span>Swag Labs</span>'
+    '<a data-test="shopping-cart-link" href="#">cart</a></header><main>content</main>'
+)
+
+
+def test_a_component_finds_things_only_inside_its_own_root(page):
+    from core.browser.base_component import BaseComponent
+
+    page.set_content(
+        '<section data-test="first"><i data-test="item">one</i></section>'
+        '<section data-test="second"><i data-test="item">two</i></section>'
+    )
+    second = BaseComponent(page.get_by_test_id("second"))
+    assert second.by_test("item").inner_text() == "two"
+    assert second.by_test("item").count() == 1  # not the other section's item as well
+
+
+def test_a_component_reports_when_its_root_is_not_visible(page):
+    from core.browser.base_component import BaseComponent
+
+    page.set_content('<div data-test="box" style="display:none">x</div>')
+    page.set_default_timeout(500)
+    with pytest.raises(AssertionError):
+        BaseComponent(page.get_by_test_id("box")).expect_visible()
+
+
+def test_the_header_component_is_loaded_when_logo_menu_and_cart_are_there(page):
+    from pages.components.header import Header
+
+    page.set_content(HEADER_HTML)
+    Header(page).expect_loaded()
+
+
+@pytest.mark.parametrize(
+    "broken",
+    [
+        HEADER_HTML.replace("Swag Labs", "Other Brand"),
+        HEADER_HTML.replace("Open Menu", "Menu"),
+        HEADER_HTML.replace('data-test="shopping-cart-link"', 'data-test="other"'),
+    ],
+    ids=["wrong logo", "no menu button", "no cart link"],
+)
+def test_the_header_component_notices_each_missing_part(page, broken):
+    from pages.components.header import Header
+
+    page.set_content(broken)
+    page.set_default_timeout(500)
+    with pytest.raises(AssertionError):
+        Header(page).expect_loaded()

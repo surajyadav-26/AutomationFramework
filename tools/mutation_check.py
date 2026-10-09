@@ -82,6 +82,18 @@ MUTANTS = [
     Mutant("core/reporting/plugin.py", "config.option.reruns = settings.rerun_count", "pass", "plugin: RERUN_COUNT ignored"),
     Mutant("core/reporting/allure_helpers.py", "if smoke_run:", "if False:", "allure: smoke runs are not grouped under Smoke"),
     Mutant("core/areas.py", "return below[1]", "return below[0]", "areas: the suite is mistaken for the area"),
+    Mutant("tools/scaffold.py", "if clashes:", "if False:", "scaffold: existing files are overwritten"),
+    Mutant("tools/scaffold.py", "if dry_run:", "if False:", "scaffold: a dry run writes files"),
+    Mutant("tools/scaffold.py", "if not is_valid_name(name):", "if False:", "scaffold: invalid area names accepted"),
+    Mutant("tools/scaffold.py", 'scenarios("{suite}/{area}/{area}.feature")
+
+
+@given', 'scenarios("{suite}/{area}.feature")
+
+
+@given', "scaffold: steps point at the wrong feature file"),
+    Mutant("tools/scaffold.py", 'if "api" in suites:', "if False:", "scaffold: no client for the api suite"),
+    Mutant("core/browser/base_component.py", "return self.root.get_by_test_id(test_id)", "return self.root.page.get_by_test_id(test_id)", "component: locators escape their own root"),
 ]  # fmt: skip
 
 
