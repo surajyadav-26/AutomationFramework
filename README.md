@@ -38,6 +38,12 @@ This repository can prove it:
    never needs it. Changing `core/`, `tools/`, `tests_framework/`, the suite `conftest.py` files, the
    dependency pins or the rule configuration in `pyproject.toml` does.
 
+A downloaded ZIP ("Download ZIP" on GitHub) works the same, with one difference: it has no `.git`
+folder, so the commit and push hooks cannot be installed and bootstrap says so (`[skipped] git hooks`).
+Everything else, including the fingerprint check, works. To get the hooks, run `git init` in the folder (or
+use `git clone` instead of the ZIP) and then `python tools/hooks.py install`. Without hooks the same rules
+still run in CI on every push and pull request.
+
 ### What stops a new test from breaking the rules
 - **Git hooks** (installed by bootstrap, or `make hooks`). `pre-commit` refuses a commit that breaks the
   structure, tag or secret rules, has style errors in the staged Python, or stages `.env`. `pre-push` runs

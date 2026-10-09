@@ -448,3 +448,30 @@ def test_a_missing_env_example_is_reported(machine):
 def test_help_prints_the_usage(capsys):
     assert bootstrap.main(["--help"], ROOT, Recorder()) == 0
     assert "Set up this machine" in capsys.readouterr().out
+
+
+class NoGitRunner(Recorder):
+    """Like a downloaded ZIP: the hook installer reports that there is no .git folder."""
+
+    def __call__(self, command, cwd):
+        code, output = super().__call__(command, cwd)
+        if command[-2:] == ["tools/hooks.py", "install"]:
+            return 0, "not a git repository (no .git folder): hooks were not installed"
+        return code, output
+
+
+def test_a_zip_download_without_git_is_told_honestly_that_no_hooks_are_installed(machine, capsys):
+    assert bootstrap.main([], machine, NoGitRunner()) == 0  # everything else works without git
+    out = capsys.readouterr().out
+    assert "[skipped] git hooks - no .git folder" in out
+    assert "[ok] git hooks" not in out
+    assert "Note: No .git folder (a downloaded ZIP?)" in out
+    assert "git init" in out
+    assert "bootstrap: ok." in out
+
+
+def test_with_git_the_hook_step_is_a_plain_ok_and_has_no_note(machine, capsys):
+    assert bootstrap.main([], machine, Recorder()) == 0
+    out = capsys.readouterr().out
+    assert "[ok] git hooks" in out
+    assert "Note:" not in out

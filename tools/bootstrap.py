@@ -43,9 +43,21 @@ def python(*args: str) -> list[str]:
     return [sys.executable, *args]
 
 
+NO_GIT_ADVICE = (
+    "No .git folder (a downloaded ZIP?): the git hooks that run the rules before every commit are "
+    "NOT installed, so only CI would catch a rule-breaking test. Run `git init` (or clone with git "
+    "instead of downloading the ZIP), then `python tools/hooks.py install`."
+)
+
+
 class Report:
     def __init__(self) -> None:
         self.failures: list[str] = []
+        self.notes: list[str] = []
+
+    def skipped(self, label: str, detail: str, note: str) -> None:
+        print(f"  [skipped] {label} - {detail}")
+        self.notes.append(note)
 
     def step(self, label: str, ok: bool, detail: str = "") -> bool:
         print(f"  [{'ok' if ok else 'FAILED'}] {label}" + (f" - {detail}" if detail else ""))
@@ -142,12 +154,18 @@ def main(argv: list[str], root: Path | None = None, runner: Runner = run_command
         ensure_env_file(root, report)
         if "--no-hooks" not in argv:
             code, output = runner(python("tools/hooks.py", "install"), root)
-            report.step("git hooks", code == 0, output.splitlines()[0] if output else "")
+            first = output.splitlines()[0] if output else ""
+            if code == 0 and "not a git repository" in output:
+                report.skipped("git hooks", "no .git folder", NO_GIT_ADVICE)
+            else:
+                report.step("git hooks", code == 0, first)
     verify(root, report, runner, full="--full" in argv)
     if report.failures:
         print(f"bootstrap: FAILED ({len(report.failures)}): {', '.join(report.failures)}")
         return 1
     print("bootstrap: ok. " + ("" if check_only else FIRST_STEPS))
+    for note in report.notes:
+        print(f"Note: {note}")
     return 0
 
 
