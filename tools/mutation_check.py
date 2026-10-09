@@ -85,13 +85,7 @@ MUTANTS = [
     Mutant("tools/scaffold.py", "if clashes:", "if False:", "scaffold: existing files are overwritten"),
     Mutant("tools/scaffold.py", "if dry_run:", "if False:", "scaffold: a dry run writes files"),
     Mutant("tools/scaffold.py", "if not is_valid_name(name):", "if False:", "scaffold: invalid area names accepted"),
-    Mutant("tools/scaffold.py", 'scenarios("{suite}/{area}/{area}.feature")
-
-
-@given', 'scenarios("{suite}/{area}.feature")
-
-
-@given', "scaffold: steps point at the wrong feature file"),
+    Mutant("tools/scaffold.py", 'scenarios("{suite}/{area}/{area}.feature")', 'scenarios("{suite}/{area}.feature")', "scaffold: steps point at the wrong feature file"),
     Mutant("tools/scaffold.py", 'if "api" in suites:', "if False:", "scaffold: no client for the api suite"),
     Mutant("core/browser/base_component.py", "return self.root.get_by_test_id(test_id)", "return self.root.page.get_by_test_id(test_id)", "component: locators escape their own root"),
 ]  # fmt: skip
